@@ -1,0 +1,1 @@
+ALTER TABLE public.doctors ADD COLUMN IF NOT EXISTS phone_number TEXT;
