@@ -92,7 +92,7 @@ function PatientAppointments() {
 
   return (
     <div className="grid gap-4">
-      <h1 className="text-2xl font-semibold tracking-tight">My consultations</h1>
+      <h1 className="text-2xl tracking-tight">My consultations</h1>
       <PatientRescheduleModal
         appointment={rescheduleAppointment}
         onClose={() => setRescheduleAppointment(null)}

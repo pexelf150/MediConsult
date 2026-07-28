@@ -95,7 +95,7 @@ function UrgentFlow() {
           <Activity className="h-5 w-5" />
         </div>
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Urgent consultation</h1>
+          <h1 className="text-2xl tracking-tight">Urgent consultation</h1>
           <p className="text-sm text-muted-foreground">
             Tell us what's going on. We'll connect you with the next available doctor right after payment.
           </p>

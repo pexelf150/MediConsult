@@ -293,7 +293,7 @@ function BookNormal() {
     <div className="grid gap-6">
       <header className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Book a consultation</h1>
+          <h1 className="text-2xl tracking-tight">Book a consultation</h1>
           <p className="text-sm text-muted-foreground">Choose a doctor, pick a day, then lock your slot.</p>
         </div>
         {step !== "doctor" && (

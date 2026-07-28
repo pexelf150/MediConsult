@@ -5,6 +5,18 @@ const backendTarget = process.env.VITE_BACKEND_URL || "http://localhost:5001";
 export default defineConfig({
   tanstackStart: {
     server: { entry: "server" },
+    nitro: {
+      preset: "node-server",
+      output: {
+        dir: ".output",
+        serverDir: ".output/server",
+        publicDir: ".output/public",
+      },
+      routeRules: {
+        "/api/**": { proxy: { to: backendTarget } },
+        "/socket.io/**": { proxy: { to: backendTarget, websocket: true } },
+      },
+    },
   },
   vite: {
     server: {
