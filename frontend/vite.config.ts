@@ -1,35 +1,34 @@
-import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import tailwindcss from "@tailwindcss/vite";
 
-const backendTarget = process.env.VITE_BACKEND_URL || "http://localhost:5001";
+const backendTarget =
+  process.env.VITE_BACKEND_URL || "http://localhost:5001";
 
 export default defineConfig({
-  tanstackStart: {
-    server: { entry: "server" },
-    nitro: {
-      preset: "node-server",
-      output: {
-        dir: ".output",
-        serverDir: ".output/server",
-        publicDir: ".output/public",
-      },
-      routeRules: {
-        "/api/**": { proxy: { to: backendTarget } },
-        "/socket.io/**": { proxy: { to: backendTarget, websocket: true } },
-      },
-    },
+  plugins: [
+    tanstackStart(),
+    react(),
+    tailwindcss(),
+  ],
+
+  ssr: {
+    noExternal: ["@tanstack/react-start"],
   },
-  vite: {
-    server: {
-      proxy: {
-        "/api": {
-          target: backendTarget,
-          changeOrigin: true,
-        },
-        "/socket.io": {
-          target: backendTarget,
-          changeOrigin: true,
-          ws: true,
-        },
+
+  server: {
+    port: 3000,
+    proxy: {
+      "/api": {
+        target: backendTarget,
+        changeOrigin: true,
+      },
+
+      "/socket.io": {
+        target: backendTarget,
+        changeOrigin: true,
+        ws: true,
       },
     },
   },
