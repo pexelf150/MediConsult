@@ -7,4 +7,14 @@ export default defineNitroConfig({
     serverDir: '.output/server',
     publicDir: '.output/public',
   },
+  // Ensure standalone Node.js server
+  experimental: {
+    standalone: true,
+  },
+  // Configure server to listen on PORT environment variable
+  runtimeConfig: {
+    nitro: {
+      envPrefix: 'PORT_',
+    },
+  },
 });

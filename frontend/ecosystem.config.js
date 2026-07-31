@@ -10,11 +10,13 @@ module.exports = {
         NODE_ENV: 'production',
         PORT: 3000,
         VITE_BACKEND_URL: 'http://localhost:5001',
+        NITRO_PORT: 3000,
       },
       env_development: {
         NODE_ENV: 'development',
         PORT: 3000,
         VITE_BACKEND_URL: 'http://localhost:5001',
+        NITRO_PORT: 3000,
       },
       error_file: './logs/err.log',
       out_file: './logs/out.log',
@@ -26,6 +28,9 @@ module.exports = {
       watch: false,
       max_memory_restart: '1G',
       merge_logs: true,
+      listen_timeout: 10000,
+      kill_timeout: 5000,
+      wait_ready: true,
     },
   ],
 };
