@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'mediconsult-frontend',
-      script: 'dist/server/server.js',
+      script: 'server.js',
       interpreter: 'node',
       instances: 1,
       exec_mode: 'fork',
