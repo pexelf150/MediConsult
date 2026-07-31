@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'mediconsult-frontend',
-      script: '.output/server/index.mjs',
+      script: 'dist/server/index.js',
       interpreter: 'node',
       instances: 1,
       exec_mode: 'fork',
@@ -10,13 +10,11 @@ module.exports = {
         NODE_ENV: 'production',
         PORT: 3000,
         VITE_BACKEND_URL: 'http://localhost:5001',
-        NITRO_PORT: 3000,
       },
       env_development: {
         NODE_ENV: 'development',
         PORT: 3000,
         VITE_BACKEND_URL: 'http://localhost:5001',
-        NITRO_PORT: 3000,
       },
       error_file: './logs/err.log',
       out_file: './logs/out.log',
