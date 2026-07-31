@@ -8,7 +8,18 @@ const backendTarget =
 
 export default defineConfig({
   plugins: [
-    tanstackStart(),
+    tanstackStart({
+      tsr: {
+        // TanStack Router configuration
+      },
+      react: {
+        // React configuration
+      },
+      nitro: {
+        // Nitro configuration for Node server
+        preset: 'node-server',
+      },
+    }),
     react(),
     tailwindcss(),
   ],
