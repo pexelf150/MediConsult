@@ -8,7 +8,7 @@ const __dirname = dirname(__filename);
 const PORT = process.env.PORT || 3000;
 
 // Import the Vite SSR server
-const serverEntry = await import('./dist/server/server.js');
+const { default: serverEntry } = await import('./dist/server/server.js');
 
 // Create HTTP server
 const server = createServer(async (req, res) => {
