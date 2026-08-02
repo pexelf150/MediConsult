@@ -47,7 +47,7 @@ const server = createServer(async (req, res) => {
       
       const proxyHeaders = new Headers();
       for (const [key, value] of Object.entries(req.headers)) {
-        if (key !== 'host' && value !== undefined) {
+        if (key !== 'host' && key !== 'accept-encoding' && value !== undefined) {
           if (Array.isArray(value)) {
             value.forEach(v => proxyHeaders.append(key, v));
           } else {
@@ -74,7 +74,9 @@ const server = createServer(async (req, res) => {
       
       res.statusCode = proxyResponse.status;
       proxyResponse.headers.forEach((value, key) => {
-        res.setHeader(key, value);
+        if (key !== 'content-encoding' && key !== 'transfer-encoding') {
+          res.setHeader(key, value);
+        }
       });
 
       const responseBody = await proxyResponse.text();
@@ -85,7 +87,7 @@ const server = createServer(async (req, res) => {
     // Serve static files from dist/client
     if (pathname.startsWith('/assets/') || 
         pathname.startsWith('/favicon.ico') ||
-        extname(pathname) && pathname !== '/') {
+        (extname(pathname) && pathname !== '/')) {
       
       // Try dist/client first
       let filePath = join(__dirname, 'dist/client', pathname);
@@ -95,8 +97,19 @@ const server = createServer(async (req, res) => {
         filePath = join(__dirname, 'dist/client/assets', pathname.replace('/assets/', ''));
       }
       
+      // If still not found, try dist/client/assets directly (for hashed assets)
+      if (!existsSync(filePath) && pathname.startsWith('/assets/')) {
+        const assetName = pathname.split('/').pop();
+        filePath = join(__dirname, 'dist/client/assets', assetName);
+      }
+      
       // If still not found, try public directory
       if (!existsSync(filePath)) {
+        filePath = join(__dirname, 'public', pathname);
+      }
+      
+      // If still not found, try public/assets
+      if (!existsSync(filePath) && pathname.startsWith('/assets/')) {
         filePath = join(__dirname, 'public', pathname);
       }
       
@@ -111,6 +124,9 @@ const server = createServer(async (req, res) => {
         res.end(file);
         return;
       }
+      
+      // Log missing file for debugging
+      console.log(`Static file not found: ${pathname}, tried: ${filePath}`);
     }
 
     // Convert Node.js request to Fetch API Request
