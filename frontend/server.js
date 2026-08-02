@@ -94,7 +94,8 @@ const server = createServer(async (req, res) => {
       
       // If not found, try dist/client/assets for assets
       if (!existsSync(filePath) && pathname.startsWith('/assets/')) {
-        filePath = join(__dirname, 'dist/client/assets', pathname.replace('/assets/', ''));
+        const assetPath = pathname.substring('/assets/'.length);
+        filePath = join(__dirname, 'dist/client/assets', assetPath);
       }
       
       // If still not found, try dist/client/assets directly (for hashed assets)
