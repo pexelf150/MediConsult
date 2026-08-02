@@ -1,11 +1,34 @@
 import { createServer } from 'http';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { readFileSync, existsSync } from 'fs';
+import { extname } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const PORT = process.env.PORT || 3000;
+
+// MIME types for static files
+const mimeTypes = {
+  '.js': 'application/javascript',
+  '.css': 'text/css',
+  '.html': 'text/html',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+  '.ttf': 'font/ttf',
+  '.eot': 'application/vnd.ms-fontobject',
+  '.mp4': 'video/mp4',
+  '.webm': 'video/webm',
+  '.ogg': 'video/ogg',
+};
 
 // Import the Vite SSR server
 const { default: serverEntry } = await import('./dist/server/server.js');
@@ -13,8 +36,30 @@ const { default: serverEntry } = await import('./dist/server/server.js');
 // Create HTTP server
 const server = createServer(async (req, res) => {
   try {
-    // Convert Node.js request to Fetch API Request
     const url = new URL(req.url, `http://${req.headers.host}`);
+    const pathname = url.pathname;
+
+    // Serve static files from dist/client
+    if (pathname.startsWith('/assets/') || 
+        pathname.startsWith('/favicon.ico') ||
+        extname(pathname) && pathname !== '/') {
+      
+      const filePath = join(__dirname, 'dist/client', pathname);
+      
+      if (existsSync(filePath)) {
+        const ext = extname(pathname);
+        const contentType = mimeTypes[ext] || 'application/octet-stream';
+        
+        const file = readFileSync(filePath);
+        res.statusCode = 200;
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Cache-Control', 'public, max-age=31536000');
+        res.end(file);
+        return;
+      }
+    }
+
+    // Convert Node.js request to Fetch API Request
     const headers = new Headers();
     
     for (const [key, value] of Object.entries(req.headers)) {
