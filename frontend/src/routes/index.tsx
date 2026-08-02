@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import { AuthForm } from "@/components/auth-form";
 
 import heroSkyline from "@/assets/background 2.jpg";
-import heroVideo from "@/assets/hero-consultation.mp4.asset.json";
 
 
 export const Route = createFileRoute("/")({
@@ -93,16 +92,11 @@ function Landing() {
 
   return (
     <div className="min-h-screen bg-background text-foreground relative isolate">
-      {/* Background Video */}
+      {/* Background Image */}
       <div className="fixed inset-0 -z-10">
-        <video
-          src={heroVideo.url}
-          poster={heroSkyline}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
+        <img
+          src={heroSkyline}
+          alt="Background"
           className="h-full w-full object-cover"
         />
         {/* Overlay */}

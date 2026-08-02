@@ -8,6 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const PORT = process.env.PORT || 3000;
+const BACKEND_URL = process.env.VITE_BACKEND_URL || 'http://localhost:5001';
 
 // MIME types for static files
 const mimeTypes = {
@@ -40,12 +41,64 @@ const server = createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host}`);
     const pathname = url.pathname;
 
+    // Proxy API requests to backend
+    if (pathname.startsWith('/api/') || pathname === '/api') {
+      const backendUrl = new URL(pathname + url.search, BACKEND_URL);
+      
+      const proxyHeaders = new Headers();
+      for (const [key, value] of Object.entries(req.headers)) {
+        if (key !== 'host' && value !== undefined) {
+          if (Array.isArray(value)) {
+            value.forEach(v => proxyHeaders.append(key, v));
+          } else {
+            proxyHeaders.set(key, value);
+          }
+        }
+      }
+
+      const body = req.method !== 'GET' && req.method !== 'HEAD' 
+        ? new Promise((resolve) => {
+            const chunks = [];
+            req.on('data', (chunk) => chunks.push(chunk));
+            req.on('end', () => resolve(Buffer.concat(chunks)));
+          })
+        : undefined;
+
+      const proxyRequest = new Request(backendUrl.toString(), {
+        method: req.method,
+        headers: proxyHeaders,
+        body: await body,
+      });
+
+      const proxyResponse = await fetch(proxyRequest);
+      
+      res.statusCode = proxyResponse.status;
+      proxyResponse.headers.forEach((value, key) => {
+        res.setHeader(key, value);
+      });
+
+      const responseBody = await proxyResponse.text();
+      res.end(responseBody);
+      return;
+    }
+
     // Serve static files from dist/client
     if (pathname.startsWith('/assets/') || 
         pathname.startsWith('/favicon.ico') ||
         extname(pathname) && pathname !== '/') {
       
-      const filePath = join(__dirname, 'dist/client', pathname);
+      // Try dist/client first
+      let filePath = join(__dirname, 'dist/client', pathname);
+      
+      // If not found, try dist/client/assets for assets
+      if (!existsSync(filePath) && pathname.startsWith('/assets/')) {
+        filePath = join(__dirname, 'dist/client/assets', pathname.replace('/assets/', ''));
+      }
+      
+      // If still not found, try public directory
+      if (!existsSync(filePath)) {
+        filePath = join(__dirname, 'public', pathname);
+      }
       
       if (existsSync(filePath)) {
         const ext = extname(pathname);
@@ -106,4 +159,5 @@ const server = createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`Frontend server listening on port ${PORT}`);
+  console.log(`Proxying API requests to ${BACKEND_URL}`);
 });
