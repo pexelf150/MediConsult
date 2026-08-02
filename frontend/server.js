@@ -31,7 +31,8 @@ const mimeTypes = {
 };
 
 // Import the Vite SSR server
-const { default: serverEntry } = await import('./dist/server/server.js');
+const serverModule = await import('./dist/server/server.js');
+const serverEntry = serverModule.default?.default?.fetch || serverModule.default?.fetch || serverModule.fetch;
 
 // Create HTTP server
 const server = createServer(async (req, res) => {
@@ -85,7 +86,7 @@ const server = createServer(async (req, res) => {
     });
 
     // Call the server entry
-    const response = await serverEntry.fetch(fetchRequest, {}, {});
+    const response = await serverEntry(fetchRequest, {}, {});
 
     // Convert Fetch API Response to Node.js response
     res.statusCode = response.status;
