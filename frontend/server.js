@@ -3,6 +3,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { readFileSync, existsSync } from 'fs';
 import { extname } from 'path';
+import { decodeURIComponent } from 'querystring';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -89,33 +90,36 @@ const server = createServer(async (req, res) => {
         pathname.startsWith('/favicon.ico') ||
         (extname(pathname) && pathname !== '/')) {
       
+      // Decode URL-encoded pathname (e.g., %20 -> space)
+      const decodedPathname = decodeURIComponent(pathname);
+      
       // Try dist/client first
-      let filePath = join(__dirname, 'dist/client', pathname);
+      let filePath = join(__dirname, 'dist/client', decodedPathname);
       
       // If not found, try dist/client/assets for assets
       if (!existsSync(filePath) && pathname.startsWith('/assets/')) {
-        const assetPath = pathname.substring('/assets/'.length);
+        const assetPath = decodedPathname.substring('/assets/'.length);
         filePath = join(__dirname, 'dist/client/assets', assetPath);
       }
       
       // If still not found, try dist/client/assets directly (for hashed assets)
       if (!existsSync(filePath) && pathname.startsWith('/assets/')) {
-        const assetName = pathname.split('/').pop();
+        const assetName = decodedPathname.split('/').pop();
         filePath = join(__dirname, 'dist/client/assets', assetName);
       }
       
       // If still not found, try public directory
       if (!existsSync(filePath)) {
-        filePath = join(__dirname, 'public', pathname);
+        filePath = join(__dirname, 'public', decodedPathname);
       }
       
       // If still not found, try public/assets
       if (!existsSync(filePath) && pathname.startsWith('/assets/')) {
-        filePath = join(__dirname, 'public', pathname);
+        filePath = join(__dirname, 'public', decodedPathname);
       }
       
       if (existsSync(filePath)) {
-        const ext = extname(pathname);
+        const ext = extname(decodedPathname);
         const contentType = mimeTypes[ext] || 'application/octet-stream';
         
         const file = readFileSync(filePath);
@@ -127,7 +131,7 @@ const server = createServer(async (req, res) => {
       }
       
       // Log missing file for debugging
-      console.log(`Static file not found: ${pathname}, tried: ${filePath}`);
+      console.log(`Static file not found: ${decodedPathname}, tried: ${filePath}`);
     }
 
     // Convert Node.js request to Fetch API Request
