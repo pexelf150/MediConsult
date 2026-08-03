@@ -3,7 +3,6 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { readFileSync, existsSync } from 'fs';
 import { extname } from 'path';
-import { decodeURIComponent } from 'querystring';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -91,7 +90,7 @@ const server = createServer(async (req, res) => {
         (extname(pathname) && pathname !== '/')) {
       
       // Decode URL-encoded pathname (e.g., %20 -> space)
-      const decodedPathname = decodeURIComponent(pathname);
+      const decodedPathname = decodeURI(pathname);
       
       // Try dist/client first
       let filePath = join(__dirname, 'dist/client', decodedPathname);
