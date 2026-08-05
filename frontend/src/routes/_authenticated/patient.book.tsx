@@ -270,7 +270,7 @@ function BookNormal() {
       );
       if (error) throw error;
       toast.success("Proceeding to payment...");
-      navigate({ to: "/patient/payment/$id", params: { id: data.paymentId } });
+      navigate({ to: "/patient/payment-new/$id", params: { id: data.paymentId } });
     } catch (err: any) {
       toast.error(err.message);
     } finally {

@@ -134,7 +134,7 @@ function DoctorSchedule() {
   const handleSaveFees = async () => {
     if (!userData) return;
     setSavingFees(true);
-    const { error } = await supabase.updateDoctorProfile({
+    const { error } = await supabase.updateDoctorFees({
       consultationFee: parseFloat(normalFee),
       urgentFee: parseFloat(urgentFee),
     });

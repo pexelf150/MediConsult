@@ -80,7 +80,7 @@ function UrgentFlow() {
         .single();
       if (insErr) throw insErr;
 
-      navigate({ to: "/patient/payment/$id", params: { id: appt.id } });
+      navigate({ to: "/patient/payment-new/$id", params: { id: appt.id } });
     } catch (err) {
       toast.error((err as Error).message);
     } finally {

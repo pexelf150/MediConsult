@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "@tanstack/react-router";
-import { LogOut, Bell, Home, Search, ChevronDown } from "lucide-react";
+import { LogOut, Bell, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -98,7 +98,7 @@ export function AppShell({
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-2.5">
           {/* Brand section */}
           <Link to="/" className="flex items-center gap-3">
-            <img src={logo} alt="MediConsult Logo" className="h-9 w-9 rounded-lg object-cover" />
+            <img src={logo} alt="MediConsult Logo" className="h-10 w-[60px] rounded-lg object-cover" />
             <div>
               <div className="text-xl font-bold text-slate-800 tracking-tight">MediConsult</div>
               <div className="text-[10px] font-semibold text-slate-600 tracking-widest uppercase">Healthcare Platform</div>
@@ -140,13 +140,7 @@ export function AppShell({
       <nav className="sticky top-[73px] z-10 bg-slate-800">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6">
           <div className="flex items-center">
-            <Link to="/" className="flex items-center p-3.5 text-slate-300 hover:text-white transition-colors">
-              <Home className="h-4 w-4" />
-            </Link>
             {nav}
-          </div>
-          <div className="flex items-center p-3.5 text-slate-300 hover:text-white cursor-pointer transition-colors">
-            <Search className="h-4 w-4" />
           </div>
         </div>
       </nav>

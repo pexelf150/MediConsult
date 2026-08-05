@@ -12,20 +12,25 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedDoctorRouteImport } from './routes/_authenticated/doctor'
 import { Route as AuthenticatedMeetingRouteImport } from './routes/_authenticated/meeting'
 import { Route as AuthenticatedPatientRouteImport } from './routes/_authenticated/patient'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as ForgotPasswordResetRouteImport } from './routes/forgot-password.reset'
+import { Route as ForgotPasswordVerifyRouteImport } from './routes/forgot-password.verify'
 import { Route as AuthenticatedDoctorIndexRouteImport } from './routes/_authenticated/doctor.index'
 import { Route as AuthenticatedDoctorBookingsRouteImport } from './routes/_authenticated/doctor.bookings'
 import { Route as AuthenticatedDoctorProfileRouteImport } from './routes/_authenticated/doctor.profile'
+import { Route as AuthenticatedDoctorRescheduleRequestsRouteImport } from './routes/_authenticated/doctor.reschedule-requests'
 import { Route as AuthenticatedDoctorScheduleRouteImport } from './routes/_authenticated/doctor.schedule'
 import { Route as AuthenticatedPatientIndexRouteImport } from './routes/_authenticated/patient.index'
 import { Route as AuthenticatedPatientAppointmentsRouteImport } from './routes/_authenticated/patient.appointments'
 import { Route as AuthenticatedPatientBookRouteImport } from './routes/_authenticated/patient.book'
 import { Route as AuthenticatedPatientProfileRouteImport } from './routes/_authenticated/patient.profile'
 import { Route as AuthenticatedPatientUrgentRouteImport } from './routes/_authenticated/patient.urgent'
+import { Route as AuthenticatedPatientPaymentNewIdRouteImport } from './routes/_authenticated/patient.payment-new.$id'
 import { Route as AuthenticatedPatientPaymentIdRouteImport } from './routes/_authenticated/patient.payment.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -40,6 +45,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -67,6 +77,16 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   path: '/callback',
   getParentRoute: () => AuthRoute,
 } as any)
+const ForgotPasswordResetRoute = ForgotPasswordResetRouteImport.update({
+  id: '/reset',
+  path: '/reset',
+  getParentRoute: () => ForgotPasswordRoute,
+} as any)
+const ForgotPasswordVerifyRoute = ForgotPasswordVerifyRouteImport.update({
+  id: '/verify',
+  path: '/verify',
+  getParentRoute: () => ForgotPasswordRoute,
+} as any)
 const AuthenticatedDoctorIndexRoute =
   AuthenticatedDoctorIndexRouteImport.update({
     id: '/',
@@ -83,6 +103,12 @@ const AuthenticatedDoctorProfileRoute =
   AuthenticatedDoctorProfileRouteImport.update({
     id: '/profile',
     path: '/profile',
+    getParentRoute: () => AuthenticatedDoctorRoute,
+  } as any)
+const AuthenticatedDoctorRescheduleRequestsRoute =
+  AuthenticatedDoctorRescheduleRequestsRouteImport.update({
+    id: '/reschedule-requests',
+    path: '/reschedule-requests',
     getParentRoute: () => AuthenticatedDoctorRoute,
   } as any)
 const AuthenticatedDoctorScheduleRoute =
@@ -121,6 +147,12 @@ const AuthenticatedPatientUrgentRoute =
     path: '/urgent',
     getParentRoute: () => AuthenticatedPatientRoute,
   } as any)
+const AuthenticatedPatientPaymentNewIdRoute =
+  AuthenticatedPatientPaymentNewIdRouteImport.update({
+    id: '/payment-new/$id',
+    path: '/payment-new/$id',
+    getParentRoute: () => AuthenticatedPatientRoute,
+  } as any)
 const AuthenticatedPatientPaymentIdRoute =
   AuthenticatedPatientPaymentIdRouteImport.update({
     id: '/payment/$id',
@@ -131,13 +163,17 @@ const AuthenticatedPatientPaymentIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
+  '/forgot-password': typeof ForgotPasswordRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/doctor': typeof AuthenticatedDoctorRouteWithChildren
   '/meeting': typeof AuthenticatedMeetingRoute
   '/patient': typeof AuthenticatedPatientRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
+  '/forgot-password/reset': typeof ForgotPasswordResetRoute
+  '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
   '/doctor/bookings': typeof AuthenticatedDoctorBookingsRoute
   '/doctor/profile': typeof AuthenticatedDoctorProfileRoute
+  '/doctor/reschedule-requests': typeof AuthenticatedDoctorRescheduleRequestsRoute
   '/doctor/schedule': typeof AuthenticatedDoctorScheduleRoute
   '/patient/appointments': typeof AuthenticatedPatientAppointmentsRoute
   '/patient/book': typeof AuthenticatedPatientBookRoute
@@ -145,16 +181,21 @@ export interface FileRoutesByFullPath {
   '/patient/urgent': typeof AuthenticatedPatientUrgentRoute
   '/doctor/': typeof AuthenticatedDoctorIndexRoute
   '/patient/': typeof AuthenticatedPatientIndexRoute
+  '/patient/payment-new/$id': typeof AuthenticatedPatientPaymentNewIdRoute
   '/patient/payment/$id': typeof AuthenticatedPatientPaymentIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
+  '/forgot-password': typeof ForgotPasswordRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/meeting': typeof AuthenticatedMeetingRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/forgot-password/reset': typeof ForgotPasswordResetRoute
+  '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
   '/doctor/bookings': typeof AuthenticatedDoctorBookingsRoute
   '/doctor/profile': typeof AuthenticatedDoctorProfileRoute
+  '/doctor/reschedule-requests': typeof AuthenticatedDoctorRescheduleRequestsRoute
   '/doctor/schedule': typeof AuthenticatedDoctorScheduleRoute
   '/patient/appointments': typeof AuthenticatedPatientAppointmentsRoute
   '/patient/book': typeof AuthenticatedPatientBookRoute
@@ -162,6 +203,7 @@ export interface FileRoutesByTo {
   '/patient/urgent': typeof AuthenticatedPatientUrgentRoute
   '/doctor': typeof AuthenticatedDoctorIndexRoute
   '/patient': typeof AuthenticatedPatientIndexRoute
+  '/patient/payment-new/$id': typeof AuthenticatedPatientPaymentNewIdRoute
   '/patient/payment/$id': typeof AuthenticatedPatientPaymentIdRoute
 }
 export interface FileRoutesById {
@@ -169,13 +211,17 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
+  '/forgot-password': typeof ForgotPasswordRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/doctor': typeof AuthenticatedDoctorRouteWithChildren
   '/_authenticated/meeting': typeof AuthenticatedMeetingRoute
   '/_authenticated/patient': typeof AuthenticatedPatientRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
+  '/forgot-password/reset': typeof ForgotPasswordResetRoute
+  '/forgot-password/verify': typeof ForgotPasswordVerifyRoute
   '/_authenticated/doctor/bookings': typeof AuthenticatedDoctorBookingsRoute
   '/_authenticated/doctor/profile': typeof AuthenticatedDoctorProfileRoute
+  '/_authenticated/doctor/reschedule-requests': typeof AuthenticatedDoctorRescheduleRequestsRoute
   '/_authenticated/doctor/schedule': typeof AuthenticatedDoctorScheduleRoute
   '/_authenticated/patient/appointments': typeof AuthenticatedPatientAppointmentsRoute
   '/_authenticated/patient/book': typeof AuthenticatedPatientBookRoute
@@ -183,6 +229,7 @@ export interface FileRoutesById {
   '/_authenticated/patient/urgent': typeof AuthenticatedPatientUrgentRoute
   '/_authenticated/doctor/': typeof AuthenticatedDoctorIndexRoute
   '/_authenticated/patient/': typeof AuthenticatedPatientIndexRoute
+  '/_authenticated/patient/payment-new/$id': typeof AuthenticatedPatientPaymentNewIdRoute
   '/_authenticated/patient/payment/$id': typeof AuthenticatedPatientPaymentIdRoute
 }
 export interface FileRouteTypes {
@@ -190,13 +237,17 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/forgot-password'
     | '/dashboard'
     | '/doctor'
     | '/meeting'
     | '/patient'
     | '/auth/callback'
+    | '/forgot-password/reset'
+    | '/forgot-password/verify'
     | '/doctor/bookings'
     | '/doctor/profile'
+    | '/doctor/reschedule-requests'
     | '/doctor/schedule'
     | '/patient/appointments'
     | '/patient/book'
@@ -204,16 +255,21 @@ export interface FileRouteTypes {
     | '/patient/urgent'
     | '/doctor/'
     | '/patient/'
+    | '/patient/payment-new/$id'
     | '/patient/payment/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/forgot-password'
     | '/dashboard'
     | '/meeting'
     | '/auth/callback'
+    | '/forgot-password/reset'
+    | '/forgot-password/verify'
     | '/doctor/bookings'
     | '/doctor/profile'
+    | '/doctor/reschedule-requests'
     | '/doctor/schedule'
     | '/patient/appointments'
     | '/patient/book'
@@ -221,19 +277,24 @@ export interface FileRouteTypes {
     | '/patient/urgent'
     | '/doctor'
     | '/patient'
+    | '/patient/payment-new/$id'
     | '/patient/payment/$id'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/forgot-password'
     | '/_authenticated/dashboard'
     | '/_authenticated/doctor'
     | '/_authenticated/meeting'
     | '/_authenticated/patient'
     | '/auth/callback'
+    | '/forgot-password/reset'
+    | '/forgot-password/verify'
     | '/_authenticated/doctor/bookings'
     | '/_authenticated/doctor/profile'
+    | '/_authenticated/doctor/reschedule-requests'
     | '/_authenticated/doctor/schedule'
     | '/_authenticated/patient/appointments'
     | '/_authenticated/patient/book'
@@ -241,6 +302,7 @@ export interface FileRouteTypes {
     | '/_authenticated/patient/urgent'
     | '/_authenticated/doctor/'
     | '/_authenticated/patient/'
+    | '/_authenticated/patient/payment-new/$id'
     | '/_authenticated/patient/payment/$id'
   fileRoutesById: FileRoutesById
 }
@@ -248,6 +310,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
+  ForgotPasswordRoute: typeof ForgotPasswordRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -271,6 +334,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/dashboard': {
@@ -308,6 +378,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/forgot-password/reset': {
+      id: '/forgot-password/reset'
+      path: '/reset'
+      fullPath: '/forgot-password/reset'
+      preLoaderRoute: typeof ForgotPasswordResetRouteImport
+      parentRoute: typeof ForgotPasswordRoute
+    }
+    '/forgot-password/verify': {
+      id: '/forgot-password/verify'
+      path: '/verify'
+      fullPath: '/forgot-password/verify'
+      preLoaderRoute: typeof ForgotPasswordVerifyRouteImport
+      parentRoute: typeof ForgotPasswordRoute
+    }
     '/_authenticated/doctor/': {
       id: '/_authenticated/doctor/'
       path: '/'
@@ -327,6 +411,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/doctor/profile'
       preLoaderRoute: typeof AuthenticatedDoctorProfileRouteImport
+      parentRoute: typeof AuthenticatedDoctorRoute
+    }
+    '/_authenticated/doctor/reschedule-requests': {
+      id: '/_authenticated/doctor/reschedule-requests'
+      path: '/reschedule-requests'
+      fullPath: '/doctor/reschedule-requests'
+      preLoaderRoute: typeof AuthenticatedDoctorRescheduleRequestsRouteImport
       parentRoute: typeof AuthenticatedDoctorRoute
     }
     '/_authenticated/doctor/schedule': {
@@ -371,6 +462,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPatientUrgentRouteImport
       parentRoute: typeof AuthenticatedPatientRoute
     }
+    '/_authenticated/patient/payment-new/$id': {
+      id: '/_authenticated/patient/payment-new/$id'
+      path: '/payment-new/$id'
+      fullPath: '/patient/payment-new/$id'
+      preLoaderRoute: typeof AuthenticatedPatientPaymentNewIdRouteImport
+      parentRoute: typeof AuthenticatedPatientRoute
+    }
     '/_authenticated/patient/payment/$id': {
       id: '/_authenticated/patient/payment/$id'
       path: '/payment/$id'
@@ -384,6 +482,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedDoctorRouteChildren {
   AuthenticatedDoctorBookingsRoute: typeof AuthenticatedDoctorBookingsRoute
   AuthenticatedDoctorProfileRoute: typeof AuthenticatedDoctorProfileRoute
+  AuthenticatedDoctorRescheduleRequestsRoute: typeof AuthenticatedDoctorRescheduleRequestsRoute
   AuthenticatedDoctorScheduleRoute: typeof AuthenticatedDoctorScheduleRoute
   AuthenticatedDoctorIndexRoute: typeof AuthenticatedDoctorIndexRoute
 }
@@ -391,6 +490,8 @@ interface AuthenticatedDoctorRouteChildren {
 const AuthenticatedDoctorRouteChildren: AuthenticatedDoctorRouteChildren = {
   AuthenticatedDoctorBookingsRoute: AuthenticatedDoctorBookingsRoute,
   AuthenticatedDoctorProfileRoute: AuthenticatedDoctorProfileRoute,
+  AuthenticatedDoctorRescheduleRequestsRoute:
+    AuthenticatedDoctorRescheduleRequestsRoute,
   AuthenticatedDoctorScheduleRoute: AuthenticatedDoctorScheduleRoute,
   AuthenticatedDoctorIndexRoute: AuthenticatedDoctorIndexRoute,
 }
@@ -404,6 +505,7 @@ interface AuthenticatedPatientRouteChildren {
   AuthenticatedPatientProfileRoute: typeof AuthenticatedPatientProfileRoute
   AuthenticatedPatientUrgentRoute: typeof AuthenticatedPatientUrgentRoute
   AuthenticatedPatientIndexRoute: typeof AuthenticatedPatientIndexRoute
+  AuthenticatedPatientPaymentNewIdRoute: typeof AuthenticatedPatientPaymentNewIdRoute
   AuthenticatedPatientPaymentIdRoute: typeof AuthenticatedPatientPaymentIdRoute
 }
 
@@ -413,6 +515,7 @@ const AuthenticatedPatientRouteChildren: AuthenticatedPatientRouteChildren = {
   AuthenticatedPatientProfileRoute: AuthenticatedPatientProfileRoute,
   AuthenticatedPatientUrgentRoute: AuthenticatedPatientUrgentRoute,
   AuthenticatedPatientIndexRoute: AuthenticatedPatientIndexRoute,
+  AuthenticatedPatientPaymentNewIdRoute: AuthenticatedPatientPaymentNewIdRoute,
   AuthenticatedPatientPaymentIdRoute: AuthenticatedPatientPaymentIdRoute,
 }
 
@@ -446,10 +549,25 @@ const AuthRouteChildren: AuthRouteChildren = {
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
+interface ForgotPasswordRouteChildren {
+  ForgotPasswordResetRoute: typeof ForgotPasswordResetRoute
+  ForgotPasswordVerifyRoute: typeof ForgotPasswordVerifyRoute
+}
+
+const ForgotPasswordRouteChildren: ForgotPasswordRouteChildren = {
+  ForgotPasswordResetRoute: ForgotPasswordResetRoute,
+  ForgotPasswordVerifyRoute: ForgotPasswordVerifyRoute,
+}
+
+const ForgotPasswordRouteWithChildren = ForgotPasswordRoute._addFileChildren(
+  ForgotPasswordRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
+  ForgotPasswordRoute: ForgotPasswordRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

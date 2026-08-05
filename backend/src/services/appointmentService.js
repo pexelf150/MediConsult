@@ -95,9 +95,16 @@ export const initiateUrgentAppointment = async (patientId, { symptoms, severity 
 
   const stripe = getStripe();
 
+  // Get minimum urgent fee from available doctors
+  const Doctor = (await import('../models/Doctor.js')).default;
+  const availableDoctors = await Doctor.find({ isAvailable: true });
+  const urgentFee = availableDoctors.length > 0
+    ? Math.min(...availableDoctors.map(d => d.urgentFee || 5000))
+    : env.consultation.urgentFee;
+
   const payment = await Payment.create({
     patient: patientId,
-    amount: env.consultation.urgentFee,
+    amount: urgentFee * 100, // in cents
     currency: env.consultation.currency,
     status: 'pending',
     metadata: {
@@ -257,6 +264,46 @@ export const initiateNormalAppointmentPayment = async (patientId, { reservationI
     checkoutUrl: session.url,
     sessionId: session.id,
   };
+};
+
+export const finalizePayment = async (appointmentId, patientId, paymentData) => {
+  const appointment = await Appointment.findById(appointmentId);
+  if (!appointment) {
+    throw new ApiError(404, 'Appointment not found');
+  }
+
+  if (appointment.patient.toString() !== patientId.toString()) {
+    throw new ApiError(403, 'You are not authorized to finalize this payment');
+  }
+
+  if (appointment.paymentStatus === 'paid') {
+    return appointment;
+  }
+
+  // Update appointment payment status
+  appointment.paymentStatus = 'paid';
+  appointment.status = 'confirmed';
+
+  // Create meeting link
+  const doctor = await getDoctorById(appointment.doctor.toString());
+  const patient = await User.findById(patientId);
+  const meeting = createMeetingForAppointment(appointment._id, doctor, patient);
+
+  appointment.jitsi = {
+    roomName: meeting.roomName,
+    meetingUrl: meeting.meetingUrl,
+    jwtToken: meeting.jwtToken,
+  };
+
+  await appointment.save();
+
+  // Populate appointment with doctor and patient details
+  await appointment.populate([
+    { path: 'patient', select: 'firstName lastName email phone' },
+    { path: 'doctor', select: 'firstName lastName specialization phone' },
+  ]);
+
+  return appointment;
 };
 
 export const completeAppointmentAfterPayment = async (payment, io) => {
@@ -600,6 +647,7 @@ export default {
   createNormalAppointment,
   initiateUrgentAppointment,
   initiateNormalAppointmentPayment,
+  finalizePayment,
   completeAppointmentAfterPayment,
   getAppointmentsForUser,
   getAppointmentById,

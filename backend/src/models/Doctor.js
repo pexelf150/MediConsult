@@ -39,6 +39,16 @@ const doctorSchema = new mongoose.Schema({
     type: String,
     maxlength: 1000,
   },
+  address: {
+    type: String,
+    trim: true,
+  },
+  contactEmail: {
+    type: String,
+    trim: true,
+    lowercase: true,
+    match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email'],
+  },
   isAvailable: {
     type: Boolean,
     default: true,

@@ -42,12 +42,21 @@ const env = {
     useJwt: process.env.JITSI_USE_JWT === 'true',
   },
   consultation: {
-    urgentFee: parseInt(process.env.URGENT_CONSULTATION_FEE, 10) || 5000,
-    currency: process.env.CURRENCY || 'lkr',
+    urgentFee: parseInt(process.env.URGENT_CONSULTATION_FEE, 10) || 5000, // Fallback only if no doctors available
+    currency: 'lkr', // Force LKR for Sri Lanka
   },
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID || '',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+  },
+  smtp: {
+    host: process.env.SMTP_HOST || '',
+    port: parseInt(process.env.SMTP_PORT, 10) || 587,
+    secure: process.env.SMTP_SECURE === 'true',
+    user: process.env.SMTP_USER || '',
+    pass: process.env.SMTP_PASS || '',
+    from: process.env.SMTP_FROM || '',
+    logoUrl: process.env.SMTP_LOGO_URL || '',
   },
   backendUrl: process.env.BACKEND_URL || 'http://localhost:5001',
   frontendUrl: process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',').find(url => url.includes('8080'))?.trim() || process.env.CLIENT_URL.split(',')[0].trim() : 'http://localhost:8080',

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,9 +13,11 @@ import { toast } from "sonner";
 interface AuthFormProps {
   onSuccess?: (role?: string) => void;
   initialRole?: "patient" | "doctor";
+  onForgotPassword?: () => void;
 }
 
-export function AuthForm({ onSuccess, initialRole }: AuthFormProps) {
+export function AuthForm({ onSuccess, initialRole, onForgotPassword }: AuthFormProps) {
+  const navigate = useNavigate();
   const [role, setRole] = useState<"patient" | "doctor">(initialRole || "patient");
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
@@ -355,7 +358,11 @@ export function AuthForm({ onSuccess, initialRole }: AuthFormProps) {
                 transition={{ delay: 0.3 }}
                 className="text-center"
               >
-                <button type="button" className="text-xs text-muted-foreground hover:text-emerald-700">
+                <button 
+                  type="button" 
+                  onClick={onForgotPassword}
+                  className="text-xs text-muted-foreground hover:text-emerald-700"
+                >
                   Forgot your password?
                 </button>
               </motion.div>

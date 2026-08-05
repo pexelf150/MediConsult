@@ -3,6 +3,13 @@ import ApiResponse from '../utils/ApiResponse.js';
 import * as currencyService from '../services/currencyService.js';
 
 export const getExchangeRate = asyncHandler(async (req, res) => {
+  const { refresh } = req.query;
+  
+  // Force refresh if requested
+  if (refresh === 'true') {
+    currencyService.clearExchangeRateCache();
+  }
+  
   const rate = await currencyService.getExchangeRate();
   
   res.status(200).json(new ApiResponse(200, 'Exchange rate retrieved', rate));

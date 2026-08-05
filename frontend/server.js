@@ -129,8 +129,12 @@ const server = createServer(async (req, res) => {
         return;
       }
       
-      // Log missing file for debugging
+      // Log missing file for debugging and return 404
       console.log(`Static file not found: ${decodedPathname}, tried: ${filePath}`);
+      res.statusCode = 404;
+      res.setHeader('Content-Type', 'text/plain');
+      res.end('File not found');
+      return;
     }
 
     // Convert Node.js request to Fetch API Request

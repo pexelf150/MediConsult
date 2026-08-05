@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { apiUrl } from "@/lib/api-config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,30 +24,33 @@ function DoctorProfile() {
   const [specialty, setSpecialty] = useState("");
   const [experienceYears, setExperienceYears] = useState("");
   const [bio, setBio] = useState("");
+  const [address, setAddress] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
 
   const { data: doctor, isLoading: doctorLoading } = useQuery({
     queryKey: ["doctor-profile", user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("doctors")
-        .select("*")
-        .eq("id", user!.id)
-        .single();
-      if (error) throw error;
-      return data;
+      const response = await fetch(apiUrl('/auth/me'), {
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to fetch doctor profile');
+      const result = await response.json();
+      return result.data?.user || result.data;
     },
   });
 
   useEffect(() => {
     if (doctor) {
-      const parts = (doctor.full_name || "").split(/\s+/);
-      setFirstName(parts[0] || "");
-      setLastName(parts.slice(1).join(" ") || "");
+      console.log('Doctor data from API:', doctor);
+      setFirstName(doctor.firstName || "");
+      setLastName(doctor.lastName || "");
       setPhone(doctor.phone || "");
-      setSpecialty(doctor.specialty || "");
-      setExperienceYears(doctor.years_experience ? String(doctor.years_experience) : "");
+      setSpecialty(doctor.specialization || "");
+      setExperienceYears(doctor.experienceYears ? String(doctor.experienceYears) : "");
       setBio(doctor.bio || "");
+      setAddress(doctor.address || "");
+      setContactEmail(doctor.contactEmail || "");
     }
   }, [doctor]);
 
@@ -64,19 +67,33 @@ function DoctorProfile() {
         throw new Error("Please enter a valid number of experience years.");
       }
 
-      const { data, error } = await supabase
-        .from("doctors")
-        .update({
-          full_name: `${firstName.trim()} ${lastName.trim()}`,
-          phone: phone.trim(),
-          specialty: specialty.trim(),
-          bio: bio.trim(),
-          experienceYears: expNum,
-        })
-        .eq("id", user!.id);
+      const updateData = {
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        phone: phone.trim(),
+        specialization: specialty.trim(),
+        bio: bio.trim(),
+        experienceYears: expNum,
+        address: address.trim(),
+        contactEmail: contactEmail.trim(),
+      };
+      console.log('Sending update data:', updateData);
 
-      if (error) throw error;
-      return data;
+      const response = await fetch(apiUrl('/auth/me'), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(updateData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update doctor profile');
+      }
+
+      const result = await response.json();
+      console.log('Update response:', result);
+      return result.data;
     },
     onSuccess: () => {
       toast.success("Doctor profile updated successfully!");
@@ -257,6 +274,35 @@ function DoctorProfile() {
                     onChange={(e) => setBio(e.target.value)}
                     placeholder="Brief description of your education, specialization, and clinical experience..."
                     className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500 min-h-[120px]"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="address">Clinic Address (Optional)</Label>
+                <div className="relative">
+                  <Info className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
+                  <Input
+                    id="address"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="123 Healthcare Street, Medical District, City 12345"
+                    className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="contactEmail">Contact Email (Optional)</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
+                  <Input
+                    id="contactEmail"
+                    type="email"
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                    placeholder="doctor@clinic.com"
+                    className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
                   />
                 </div>
               </div>

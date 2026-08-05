@@ -7,13 +7,15 @@ import {
   Mail,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { apiUrl } from "@/lib/api-config";
 import { useState, useRef } from "react";
 
 import { Button } from "@/components/ui/button";
 import { AuthForm } from "@/components/auth-form";
+import { ForgotPasswordModal } from "@/components/forgot-password-modal";
 
 import heroSkyline from "@/assets/background 2.jpg";
+import logo from "@/assets/logo.jpeg";
 
 
 export const Route = createFileRoute("/")({
@@ -61,14 +63,23 @@ function Landing() {
   const { data: doctors } = useQuery({
     queryKey: ["landing-doctors"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("doctors").select("*");
-      if (error) throw error;
-      return data || [];
+      const response = await fetch(apiUrl('/doctors'), {
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to fetch doctors');
+      const result = await response.json();
+      return Array.isArray(result.data?.doctors) ? result.data.doctors : [];
     },
   });
 
-  const doctorPhone = doctors?.find((d: any) => d.phone)?.phone || "1-800-MEDI-NOW";
+  // Get the first doctor with contact info, prioritizing those with address
+  const doctorsArray = Array.isArray(doctors) ? doctors : [];
+  const doctorWithInfo = doctorsArray.find((d: any) => d.address) || doctorsArray[0];
+  const doctorPhone = doctorWithInfo?.phone || "1-800-MEDI-NOW";
+  const doctorEmail = doctorWithInfo?.contactEmail || doctorWithInfo?.email || "care@mediconsult.health";
+  const doctorAddress = doctorWithInfo?.address || "100 Medical Plaza, Suite 400, San Francisco, CA 94143";
   const [authRole, setAuthRole] = useState<"patient" | "doctor">("patient");
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
 
   const handleAuthSuccess = (role?: string) => {
     if (role === "doctor") {
@@ -111,7 +122,7 @@ function Landing() {
               <Phone className="h-3.5 w-3.5" /> 24/7 Urgent line: {doctorPhone}
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <Mail className="h-3.5 w-3.5" /> care@mediconsult.health
+              <Mail className="h-3.5 w-3.5" /> {doctorEmail}
             </span>
           </div>
           <span className="text-white/60">Licensed physicians · HIPAA-aligned</span>
@@ -121,12 +132,10 @@ function Landing() {
       {/* Transparent Glass Header */}
       <header className="sticky top-0 z-30 w-full border-b border-white/20 bg-white/10 backdrop-blur-lg">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link to="/" className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <Stethoscope className="h-5 w-5" />
-            </div>
+          <Link to="/" className="flex items-center gap-3">
+            <img src={logo} alt="MediConsult Logo" className="h-14 w-[84px] rounded-lg object-cover" />
             <div className="leading-tight">
-              <div className="text-base font-semibold tracking-tight text-white">
+              <div className="text-xl font-semibold tracking-tight text-white">
                 MediConsult
               </div>
               <div className="text-[10px] uppercase tracking-[0.18em] text-white/70">
@@ -271,7 +280,11 @@ function Landing() {
                 </div>
 
 
-                <AuthForm onSuccess={handleAuthSuccess} initialRole={authRole} />
+                <AuthForm 
+                  onSuccess={handleAuthSuccess} 
+                  initialRole={authRole} 
+                  onForgotPassword={() => setForgotPasswordOpen(true)}
+                />
 
 
               </motion.div>
@@ -293,9 +306,7 @@ function Landing() {
           <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
             <div className="flex flex-col gap-3">
               <Link to="/" className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <Stethoscope className="h-4.5 w-4.5" />
-                </div>
+                <img src={logo} alt="MediConsult Logo" className="h-10 w-[60px] rounded-lg object-cover" />
                 <span className="text-base font-semibold tracking-tight text-white">MediConsult</span>
               </Link>
               <p className="text-xs text-white/50 leading-relaxed mt-2">
@@ -327,11 +338,10 @@ function Landing() {
                   <Phone className="h-3.5 w-3.5 text-white/70" /> {doctorPhone}
                 </li>
                 <li className="flex items-center gap-2">
-                  <Mail className="h-3.5 w-3.5 text-white/70" /> care@mediconsult.health
+                  <Mail className="h-3.5 w-3.5 text-white/70" /> {doctorEmail}
                 </li>
                 <li className="leading-relaxed">
-                  100 Medical Plaza, Suite 400<br />
-                  San Francisco, CA 94143
+                  {doctorAddress}
                 </li>
               </ul>
             </div>
@@ -341,12 +351,12 @@ function Landing() {
             <div className="flex gap-4">
               <a href="#" className="hover:text-white transition-colors">Twitter</a>
               <a href="#" className="hover:text-white transition-colors">LinkedIn</a>
-              <a href="#" className="hover:text-white transition-colors">Facebook</a>
             </div>
           </div>
         </div>
       </footer>
 
+      <ForgotPasswordModal open={forgotPasswordOpen} onOpenChange={setForgotPasswordOpen} />
     </div>
   );
 }

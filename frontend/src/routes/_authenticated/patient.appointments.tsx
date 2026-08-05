@@ -22,6 +22,7 @@ function PatientAppointments() {
   const qc = useQueryClient();
   const [previewPrescription, setPreviewPrescription] = useState<any>(null);
   const [rescheduleAppointment, setRescheduleAppointment] = useState<any>(null);
+  const [selectedDate, setSelectedDate] = useState<string>("");
   const prescriptionRef = useRef<HTMLDivElement>(null);
 
   const handlePreviewPrescription = (appointment: any) => {
@@ -67,20 +68,62 @@ function PatientAppointments() {
     }
   };
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["patient-appointments"],
+  const { data: appointments, isLoading, error } = useQuery({
+    queryKey: ["appointments"],
     queryFn: async () => {
       const response = await fetch(apiUrl('/appointments'), {
         credentials: 'include',
       });
-      if (!response.ok) {
-        throw new Error('Failed to fetch appointments');
-      }
+      if (!response.ok) throw new Error('Failed to fetch appointments');
       const result = await response.json();
       return result.data.appointments;
     },
     refetchInterval: 5000,
   });
+
+  const { data: rescheduleRequests } = useQuery({
+    queryKey: ["patient-reschedule-requests"],
+    queryFn: async () => {
+      const response = await fetch(apiUrl('/reschedule/patient/requests'), {
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to fetch reschedule requests');
+      const result = await response.json();
+      return result.data;
+    },
+  });
+
+  // Create a map of appointment IDs to request status
+  const pendingRequestsMap = new Map(
+    rescheduleRequests
+      ?.filter((r: any) => r.status === 'pending')
+      .map((r: any) => [r.appointment._id, 'pending']) || []
+  );
+  const approvedRequestsMap = new Map(
+    rescheduleRequests
+      ?.filter((r: any) => r.status === 'approved')
+      .map((r: any) => [r.appointment._id, 'approved']) || []
+  );
+
+  // Sort appointments by date and time in descending order
+  const sortedAppointments = appointments 
+    ? [...appointments].sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime())
+    : [];
+
+  // Group appointments by date
+  const groupedAppointments = sortedAppointments.reduce((groups: Record<string, any[]>, appointment: any) => {
+    const date = new Date(appointment.scheduledAt).toLocaleDateString();
+    if (!groups[date]) {
+      groups[date] = [];
+    }
+    groups[date].push(appointment);
+    return groups;
+  }, {} as Record<string, any[]>);
+
+  // Filter by selected date
+  const filteredGroupedAppointments = selectedDate
+    ? { [selectedDate]: groupedAppointments[selectedDate] || [] }
+    : groupedAppointments;
 
   if (isLoading) {
     return (
@@ -92,169 +135,199 @@ function PatientAppointments() {
 
   return (
     <div className="grid gap-4">
-      <h1 className="text-2xl tracking-tight">My consultations</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl tracking-tight">My consultations</h1>
+        <div className="flex items-center gap-4">
+          <Label htmlFor="search-date" className="whitespace-nowrap">Search by date</Label>
+          <Input
+            id="search-date"
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="max-w-xs"
+          />
+          {selectedDate && (
+            <Button variant="outline" size="sm" onClick={() => setSelectedDate("")}>
+              Clear filter
+            </Button>
+          )}
+        </div>
+      </div>
       <PatientRescheduleModal
         appointment={rescheduleAppointment}
         onClose={() => setRescheduleAppointment(null)}
         onSuccess={() => {
           qc.invalidateQueries({ queryKey: ["patient-appointments"] });
-          toast.success("Appointment rescheduled successfully");
+          qc.invalidateQueries({ queryKey: ["patient-reschedule-requests"] });
+          toast.success("Reschedule request sent successfully");
           setRescheduleAppointment(null);
         }}
       />
-      {!data || data.length === 0 ? (
+      {!sortedAppointments || sortedAppointments.length === 0 ? (
         <p className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">
           You haven't booked any consultations yet.
         </p>
       ) : (
-        <ul className="grid gap-3">
-          {data.map((a) => (
-            <li key={a._id} className={`rounded-xl border bg-card p-4 shadow-soft ${a.isRescheduled ? 'border-amber-200 bg-amber-50' : ''}`}>
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    {a.type === "urgent" && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-urgent/10 px-2 py-0.5 text-xs font-medium text-urgent">
-                        <Activity className="h-3 w-3" /> Urgent
-                      </span>
-                    )}
-                    <span className="text-sm font-medium">
-                      {new Date(a.scheduledAt).toLocaleString()}
-                    </span>
-                    {a.isRescheduled && (
-                      <div className="flex items-center gap-1 text-amber-600" title="This appointment has been rescheduled">
-                        <AlertCircle className="h-4 w-4" />
-                        <span className="text-xs font-medium">Rescheduled</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="mt-1 text-xs text-muted-foreground">
-                    Status: {a.status}
-                  </div>
-                  {a.isRescheduled && a.rescheduleHistory && a.rescheduleHistory.length > 0 && (
-                    <div className="mt-1 text-xs text-amber-700">
-                      Originally scheduled: {new Date(a.rescheduleHistory[0].originalScheduledAt).toLocaleString()}
-                    </div>
-                  )}
-                  {a.symptoms && (
-                    <p className="mt-2 line-clamp-2 max-w-xl text-sm text-muted-foreground">
-                      <span className="font-medium text-foreground">Symptoms: </span>
-                      {a.symptoms}
-                    </p>
-                  )}
-                  {a.healthMetrics && (
-                    <div className="mt-2 rounded-lg border bg-muted/30 p-3 text-xs">
-                      <div className="mb-1.5 font-medium text-foreground">Health Metrics</div>
-                      <div className="grid gap-1.5 sm:grid-cols-3">
-                        {a.healthMetrics.cholesterol?.value && (
-                          <div className="flex items-center justify-between">
-                            <span className="text-muted-foreground">Cholesterol:</span>
-                            <span className="flex items-center gap-1.5">
-                              <span className="font-medium">{a.healthMetrics.cholesterol.value} mg/dL</span>
-                              <span
-                                className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                                  a.healthMetrics.cholesterol.level === 'high'
-                                    ? 'bg-destructive/10 text-destructive'
-                                    : a.healthMetrics.cholesterol.level === 'normal'
-                                    ? 'bg-emerald-500/10 text-emerald-600'
-                                    : 'bg-muted'
-                                }`}
-                              >
-                                {a.healthMetrics.cholesterol.level?.toUpperCase() || 'N/A'}
-                              </span>
-                            </span>
-                          </div>
+        <>
+          {Object.entries(filteredGroupedAppointments).map(([date, appointments]: [string, any[]]) => (
+            <div key={date} className="space-y-3">
+              <h3 className="text-sm font-semibold text-muted-foreground">{date}</h3>
+              <ul className="grid gap-3">
+                {appointments.map((a) => (
+                <li key={a._id} className={`rounded-xl border bg-card p-4 shadow-soft ${a.isRescheduled ? 'border-amber-200 bg-amber-50' : ''}`}>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        {a.type === "urgent" && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-urgent/10 px-2 py-0.5 text-xs font-medium text-urgent">
+                            <Activity className="h-3 w-3" /> Urgent
+                          </span>
                         )}
-                        {a.healthMetrics.sugar?.value && (
-                          <div className="flex items-center justify-between">
-                            <span className="text-muted-foreground">Blood Sugar:</span>
-                            <span className="flex items-center gap-1.5">
-                              <span className="font-medium">{a.healthMetrics.sugar.value} mg/dL</span>
-                              <span
-                                className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                                  a.healthMetrics.sugar.level === 'high'
-                                    ? 'bg-destructive/10 text-destructive'
-                                    : a.healthMetrics.sugar.level === 'normal'
-                                    ? 'bg-emerald-500/10 text-emerald-600'
-                                    : 'bg-muted'
-                                }`}
-                              >
-                                {a.healthMetrics.sugar.level?.toUpperCase() || 'N/A'}
-                              </span>
-                            </span>
-                          </div>
-                        )}
-                        {a.healthMetrics.bloodPressure?.value && (
-                          <div className="flex items-center justify-between">
-                            <span className="text-muted-foreground">BP:</span>
-                            <span className="flex items-center gap-1.5">
-                              <span className="font-medium">{a.healthMetrics.bloodPressure.value}</span>
-                              <span
-                                className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                                  a.healthMetrics.bloodPressure.level === 'high'
-                                    ? 'bg-destructive/10 text-destructive'
-                                    : a.healthMetrics.bloodPressure.level === 'normal'
-                                    ? 'bg-emerald-500/10 text-emerald-600'
-                                    : 'bg-muted'
-                                }`}
-                              >
-                                {a.healthMetrics.bloodPressure.level?.toUpperCase() || 'N/A'}
-                              </span>
-                            </span>
+                        <span className="text-sm font-medium">
+                          {new Date(a.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        {a.isRescheduled && (
+                          <div className="flex items-center gap-1 text-amber-600" title="This appointment has been rescheduled">
+                            <AlertCircle className="h-4 w-4" />
+                            <span className="text-xs font-medium">Rescheduled</span>
                           </div>
                         )}
                       </div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        Status: {a.status}
+                      </div>
+                      {a.isRescheduled && a.rescheduleHistory && a.rescheduleHistory.length > 0 && (
+                        <div className="mt-1 text-xs text-amber-700">
+                          Originally scheduled: {new Date(a.rescheduleHistory[0].originalScheduledAt).toLocaleString()}
+                        </div>
+                      )}
+                      {a.symptoms && (
+                        <p className="mt-2 line-clamp-2 max-w-xl text-sm text-muted-foreground">
+                          <span className="font-medium text-foreground">Symptoms: </span>
+                          {a.symptoms}
+                        </p>
+                      )}
+                      {a.healthMetrics && (
+                        <div className="mt-2 rounded-lg border bg-muted/30 p-3 text-xs">
+                          <div className="mb-1.5 font-medium text-foreground">Health Metrics</div>
+                          <div className="grid gap-1.5 sm:grid-cols-3">
+                            {a.healthMetrics.cholesterol?.value && (
+                              <div className="flex items-center justify-between">
+                                <span className="text-muted-foreground">Cholesterol:</span>
+                                <span className="flex items-center gap-1.5">
+                                  <span className="font-medium">{a.healthMetrics.cholesterol.value} mg/dL</span>
+                                  <span
+                                    className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+                                      a.healthMetrics.cholesterol.level === 'high'
+                                        ? 'bg-destructive/10 text-destructive'
+                                        : a.healthMetrics.cholesterol.level === 'normal'
+                                        ? 'bg-emerald-500/10 text-emerald-600'
+                                        : 'bg-muted'
+                                    }`}
+                                  >
+                                    {a.healthMetrics.cholesterol.level?.toUpperCase() || 'N/A'}
+                                  </span>
+                                </span>
+                              </div>
+                            )}
+                            {a.healthMetrics.sugar?.value && (
+                              <div className="flex items-center justify-between">
+                                <span className="text-muted-foreground">Blood Sugar:</span>
+                                <span className="flex items-center gap-1.5">
+                                  <span className="font-medium">{a.healthMetrics.sugar.value} mg/dL</span>
+                                  <span
+                                    className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+                                      a.healthMetrics.sugar.level === 'high'
+                                        ? 'bg-destructive/10 text-destructive'
+                                        : a.healthMetrics.sugar.level === 'normal'
+                                        ? 'bg-emerald-500/10 text-emerald-600'
+                                        : 'bg-muted'
+                                    }`}
+                                  >
+                                    {a.healthMetrics.sugar.level?.toUpperCase() || 'N/A'}
+                                  </span>
+                                </span>
+                              </div>
+                            )}
+                            {a.healthMetrics.bloodPressure?.value && (
+                              <div className="flex items-center justify-between">
+                                <span className="text-muted-foreground">BP:</span>
+                                <span className="flex items-center gap-1.5">
+                                  <span className="font-medium">{a.healthMetrics.bloodPressure.value}</span>
+                                  <span
+                                    className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+                                      a.healthMetrics.bloodPressure.level === 'high'
+                                        ? 'bg-destructive/10 text-destructive'
+                                        : a.healthMetrics.bloodPressure.level === 'normal'
+                                        ? 'bg-emerald-500/10 text-emerald-600'
+                                        : 'bg-muted'
+                                    }`}
+                                  >
+                                    {a.healthMetrics.bloodPressure.level?.toUpperCase() || 'N/A'}
+                                  </span>
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      {a.bloodGroup && (
+                        <div className="mt-2 text-xs">
+                          <span className="text-muted-foreground">Blood Group: </span>
+                          <span className="font-medium">{a.bloodGroup}</span>
+                        </div>
+                      )}
+                      {!a.doctorApproved && a.status !== "completed" && a.status !== "cancelled" && (
+                        <div className="mt-3 rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">
+                          <p className="font-medium">Note: The patient is granted access to the consultation only after the doctor admits them to the session. Please keep your mobile phone available and stay in contact on your scheduled appointment day.</p>
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {a.bloodGroup && (
-                    <div className="mt-2 text-xs">
-                      <span className="text-muted-foreground">Blood Group: </span>
-                      <span className="font-medium">{a.bloodGroup}</span>
+                    <div className="flex gap-2">
+                      {a.jitsi?.meetingUrl && a.status !== "completed" && a.status !== "cancelled" && (
+                        <Button 
+                          size="sm" 
+                          onClick={() => navigate({ to: "/meeting", search: { appointmentId: a._id } })}
+                          disabled={!a.doctorApproved}
+                        >
+                          <Video className="mr-1.5 h-4 w-4" /> Join visit
+                        </Button>
+                      )}
+                      {(a.status === "scheduled" || a.status === "confirmed") && a.type === "normal" && (
+                        pendingRequestsMap.has(a._id) ? (
+                          <Button size="sm" className="bg-slate-400 text-slate-950 cursor-default" disabled>
+                            <CalendarClock className="mr-1.5 h-4 w-4" /> Requested
+                          </Button>
+                        ) : approvedRequestsMap.has(a._id) ? (
+                          <Button size="sm" className="bg-green-500 text-green-950 cursor-default" disabled>
+                            <CalendarClock className="mr-1.5 h-4 w-4" /> Request Approved
+                          </Button>
+                        ) : (
+                          <Button size="sm" className="bg-amber-400 text-amber-950 hover:bg-amber-500" onClick={() => handleRescheduleAppointment(a)}>
+                            <CalendarClock className="mr-1.5 h-4 w-4" /> Request Reschedule
+                          </Button>
+                        )
+                      )}
+                      {a.prescription && a.prescription.medications && a.prescription.medications.length > 0 && (
+                        <Button size="sm" variant="outline" onClick={() => handlePreviewPrescription(a)}>
+                          <FileText className="mr-1.5 h-4 w-4" /> Prescription
+                        </Button>
+                      )}
                     </div>
-                  )}
-                  {!a.doctorApproved && a.status !== "completed" && a.status !== "cancelled" && (
-                    <div className="mt-3 rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">
-                      <p className="font-medium">Note: The patient is granted access to the consultation only after the doctor admits them to the session. Please keep your mobile phone available and stay in contact on your scheduled appointment day.</p>
-                    </div>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  {a.jitsi?.meetingUrl && a.status !== "completed" && a.status !== "cancelled" && (
-                    <Button 
-                      size="sm" 
-                      onClick={() => navigate({ to: "/meeting", search: { appointmentId: a._id } })}
-                      disabled={!a.doctorApproved}
-                    >
-                      <Video className="mr-1.5 h-4 w-4" /> Join visit
-                    </Button>
-                  )}
-                  {a.status === "scheduled" && a.type === "normal" && (
-                    <Button size="sm" variant="outline" onClick={() => handleRescheduleAppointment(a)}>
-                      <CalendarClock className="mr-1.5 h-4 w-4" /> Reschedule
-                    </Button>
-                  )}
-                  {a.prescription && a.prescription.medications && a.prescription.medications.length > 0 && (
-                    <Button size="sm" variant="outline" onClick={() => handlePreviewPrescription(a)}>
-                      <FileText className="mr-1.5 h-4 w-4" /> Prescription
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+        </>
       )}
 
       {/* Prescription Preview Dialog */}
       <Dialog open={!!previewPrescription} onOpenChange={() => setPreviewPrescription(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto [&>button]:hidden">
           <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              <span>Prescription Preview</span>
-              <Button variant="ghost" size="sm" onClick={() => setPreviewPrescription(null)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </DialogTitle>
+            <DialogTitle>Prescription Preview</DialogTitle>
           </DialogHeader>
           {previewPrescription && (
             <div className="space-y-4">
@@ -306,10 +379,11 @@ function PatientRescheduleModal({
 
   // Fetch available slots when date is selected
   const { data: slotStatus } = useQuery({
-    queryKey: ["slot-status", appointment?.doctor, selectedDate],
+    queryKey: ["slot-status", appointment?.doctor?._id || appointment?.doctor, selectedDate],
     enabled: !!appointment?.doctor && !!selectedDate,
     queryFn: async () => {
-      const response = await fetch(apiUrl(`/appointments/slot-status/${appointment.doctor}?date=${selectedDate}`), {
+      const doctorId = appointment?.doctor?._id || appointment?.doctor;
+      const response = await fetch(apiUrl(`/appointments/slot-status/${doctorId}?date=${selectedDate}`), {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch slot status');
@@ -351,11 +425,12 @@ function PatientRescheduleModal({
     setLoading(true);
 
     try {
-      const response = await fetch(apiUrl(`/appointments/${appointment._id}/reschedule`), {
-        method: 'PATCH',
+      const response = await fetch(apiUrl('/reschedule/request'), {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
+          appointmentId: appointment._id,
           newScheduledAt: newScheduledAt.toISOString(),
           reason,
         }),
@@ -363,7 +438,7 @@ function PatientRescheduleModal({
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Failed to reschedule');
+        throw new Error(error.message || 'Failed to send reschedule request');
       }
 
       onSuccess();

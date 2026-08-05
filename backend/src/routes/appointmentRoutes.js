@@ -119,4 +119,12 @@ router.patch(
   appointmentController.rescheduleAppointment
 );
 
+router.post(
+  '/:id/payment',
+  restrictTo('patient'),
+  appointmentIdValidation,
+  validate,
+  appointmentController.finalizePayment
+);
+
 export default router;

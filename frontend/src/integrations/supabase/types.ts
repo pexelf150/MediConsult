@@ -188,6 +188,7 @@ export type Database = {
           age: number | null
           avatar_url: string | null
           created_at: string
+          date_of_birth: string | null
           full_name: string
           gender: string | null
           id: string
@@ -198,6 +199,7 @@ export type Database = {
           age?: number | null
           avatar_url?: string | null
           created_at?: string
+          date_of_birth?: string | null
           full_name?: string
           gender?: string | null
           id: string
@@ -208,6 +210,7 @@ export type Database = {
           age?: number | null
           avatar_url?: string | null
           created_at?: string
+          date_of_birth?: string | null
           full_name?: string
           gender?: string | null
           id?: string

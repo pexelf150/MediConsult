@@ -158,6 +158,16 @@ export const rescheduleAppointment = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, 'Appointment rescheduled successfully', { appointment }));
 });
 
+export const finalizePayment = asyncHandler(async (req, res) => {
+  const appointment = await appointmentService.finalizePayment(
+    req.params.id,
+    req.user._id,
+    req.body
+  );
+
+  res.status(200).json(new ApiResponse(200, 'Payment finalized successfully', { appointment }));
+});
+
 export default {
   createNormal,
   initiateUrgent,
@@ -171,4 +181,5 @@ export default {
   confirmReservationAndBook,
   getSlotStatus,
   rescheduleAppointment,
+  finalizePayment,
 };

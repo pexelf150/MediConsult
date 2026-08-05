@@ -79,6 +79,15 @@ export const getProfile = async (userId) => {
     throw new ApiError(404, 'User not found');
   }
 
+  // If user is a doctor, use Doctor model to get doctor-specific fields
+  if (user.role === 'doctor') {
+    const Doctor = (await import('../models/Doctor.js')).default;
+    const doctor = await Doctor.findById(userId);
+    if (doctor) {
+      return doctor;
+    }
+  }
+
   return user;
 };
 
@@ -97,16 +106,27 @@ export const updateProfile = async (userId, updates) => {
 
   disallowedFields.forEach((field) => delete filteredUpdates[field]);
 
-  const user = await User.findByIdAndUpdate(userId, filteredUpdates, {
-    new: true,
-    runValidators: true,
-  });
-
+  // Check if user is a doctor and use Doctor model for doctor-specific fields
+  const user = await User.findById(userId);
   if (!user) {
     throw new ApiError(404, 'User not found');
   }
 
-  return user;
+  let updatedUser;
+  if (user.role === 'doctor') {
+    const Doctor = (await import('../models/Doctor.js')).default;
+    updatedUser = await Doctor.findByIdAndUpdate(userId, filteredUpdates, {
+      new: true,
+      runValidators: true,
+    });
+  } else {
+    updatedUser = await User.findByIdAndUpdate(userId, filteredUpdates, {
+      new: true,
+      runValidators: true,
+    });
+  }
+
+  return updatedUser;
 };
 
 export const setAuthCookie = (res, token) => {

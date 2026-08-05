@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
-import { User, Mail, Phone, Calendar, Users, Save, Loader2, Shield } from "lucide-react";
+import { User, Mail, Phone, Calendar, Users, Save, Loader2, Shield, Cake } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/patient/profile")({
@@ -21,6 +21,7 @@ function PatientProfile() {
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [gender, setGender] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
   const [age, setAge] = useState("");
 
   const { data: profile, isLoading: profileLoading } = useQuery({
@@ -44,9 +45,32 @@ function PatientProfile() {
       setLastName(parts.slice(1).join(" ") || "");
       setPhone(profile.phone || "");
       setGender(profile.gender || "");
+      setDateOfBirth(profile.date_of_birth || "");
       setAge(profile.age ? String(profile.age) : "");
     }
   }, [profile]);
+
+  // Calculate age from date of birth
+  const calculateAge = (dob: string) => {
+    if (!dob) return "";
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return String(age);
+  };
+
+  // Update age when date of birth changes
+  useEffect(() => {
+    if (dateOfBirth) {
+      setAge(calculateAge(dateOfBirth));
+    } else {
+      setAge("");
+    }
+  }, [dateOfBirth]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async () => {
@@ -56,9 +80,12 @@ function PatientProfile() {
       if (!phone.trim()) {
         throw new Error("Phone number is required.");
       }
+      if (!dateOfBirth) {
+        throw new Error("Date of birth is required.");
+      }
       const ageNum = Number(age);
       if (!age || isNaN(ageNum) || ageNum < 1 || ageNum > 120) {
-        throw new Error("Please enter a valid age between 1 and 120.");
+        throw new Error("Please enter a valid date of birth.");
       }
 
       const { data, error } = await supabase
@@ -67,6 +94,7 @@ function PatientProfile() {
           full_name: `${firstName.trim()} ${lastName.trim()}`,
           phone: phone.trim(),
           gender,
+          date_of_birth: dateOfBirth,
           age: ageNum,
         })
         .eq("id", user!.id);
@@ -103,7 +131,7 @@ function PatientProfile() {
       <div className="mb-8">
         <h1 className="text-3xl tracking-tight text-foreground">Profile Management</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Manage your personal details, gender, age, and contact information.
+          Manage your personal details, gender, date of birth, and contact information.
         </p>
       </div>
 
@@ -133,8 +161,8 @@ function PatientProfile() {
           </div>
         </div>
 
-        {/* Right Side: Profile Details Form & Password Change */}
-        <div className="md:col-span-2 space-y-6">
+        {/* Right Side: Profile Details Form */}
+        <div className="md:col-span-2">
           <div className="rounded-2xl border border-emerald-100 bg-card p-6 shadow-soft">
             <form onSubmit={handleSubmit} className="space-y-6">
               <h3 className="text-lg font-semibold text-foreground border-b pb-3 border-emerald-50">
@@ -228,6 +256,23 @@ function PatientProfile() {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                  <div className="relative">
+                    <Cake className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
+                    <Input
+                      id="dateOfBirth"
+                      type="date"
+                      value={dateOfBirth}
+                      onChange={(e) => setDateOfBirth(e.target.value)}
+                      required
+                      className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="space-y-2">
                   <Label htmlFor="age">Age</Label>
                   <div className="relative">
                     <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
@@ -237,12 +282,12 @@ function PatientProfile() {
                       min="1"
                       max="120"
                       value={age}
-                      onChange={(e) => setAge(e.target.value)}
-                      required
+                      disabled
                       placeholder="30"
-                      className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
+                      className="pl-10 rounded-xl bg-muted/40 border-muted-foreground/10 text-muted-foreground cursor-not-allowed"
                     />
                   </div>
+                  <p className="text-[10px] text-muted-foreground">Age is automatically calculated from date of birth</p>
                 </div>
               </div>
 
@@ -265,119 +310,8 @@ function PatientProfile() {
               </div>
             </form>
           </div>
-
-          {/* Change Password Card */}
-          <div className="rounded-2xl border border-emerald-100 bg-card p-6 shadow-soft">
-            <PasswordChangeForm />
-          </div>
         </div>
       </div>
     </div>
-  );
-}
-
-function PasswordChangeForm() {
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const handlePasswordChange = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentPassword) {
-      toast.error("Please enter your current password.");
-      return;
-    }
-    if (newPassword.length < 8) {
-      toast.error("New password must be at least 8 characters long.");
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      toast.error("New passwords do not match.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.changePassword(currentPassword, newPassword);
-      if (error) throw error;
-      toast.success("Password changed successfully!");
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to change password.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handlePasswordChange} className="space-y-6">
-      <h3 className="text-lg font-semibold text-foreground border-b pb-3 border-emerald-50">
-        Change Password
-      </h3>
-
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="currentPassword">Current Password</Label>
-          <Input
-            id="currentPassword"
-            type="password"
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            required
-            placeholder="••••••••"
-            className="rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
-          />
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="newPassword">New Password</Label>
-            <Input
-              id="newPassword"
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-              placeholder="••••••••"
-              className="rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm New Password</Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              placeholder="••••••••"
-              className="rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="flex justify-end pt-4 border-t border-emerald-50">
-        <Button
-          type="submit"
-          disabled={loading}
-          className="gap-2 rounded-xl px-5 bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-700/10"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" /> Updating...
-            </>
-          ) : (
-            <>
-              <Save className="h-4 w-4" /> Update Password
-            </>
-          )}
-        </Button>
-      </div>
-    </form>
   );
 }

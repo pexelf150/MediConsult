@@ -192,9 +192,9 @@ class CustomSupabaseQueryBuilder {
           full_name: `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
           specialty: user?.specialization || 'General Practitioner',
           bio: user?.bio || '',
-          years_experience: user?.experienceYears || 5,
+          years_experience: user.experienceYears || 5,
           consultation_fee_cents: (user?.consultationFee || 500) * 100,
-          urgent_fee_cents: (user?.urgentFee || 4999),
+          urgent_fee_cents: (user?.urgentFee || 5000) * 100,
           is_available: user?.isAvailable !== undefined ? user.isAvailable : true,
           profiles: {
             id: user?._id || user?.id,
@@ -214,7 +214,7 @@ class CustomSupabaseQueryBuilder {
             bio: user.bio || '',
             years_experience: user.experienceYears || 5,
             consultation_fee_cents: (user.consultationFee || 500) * 100,
-            urgent_fee_cents: (user.urgentFee || 4999),
+            urgent_fee_cents: (user.urgentFee || 5000) * 100,
             is_available: user.isAvailable !== undefined ? user.isAvailable : true,
             profiles: {
               id: user._id || user.id,
@@ -233,7 +233,7 @@ class CustomSupabaseQueryBuilder {
         bio: doc.bio || '',
         years_experience: doc.experienceYears || 5,
         consultation_fee_cents: (doc.consultationFee || 500) * 100,
-        urgent_fee_cents: (doc.urgentFee || 4999),
+        urgent_fee_cents: (doc.urgentFee || 5000) * 100,
         is_available: doc.isAvailable,
         phone: doc.phone || '',
         profiles: {
@@ -365,7 +365,7 @@ class CustomSupabaseQueryBuilder {
             appointment_type: 'urgent',
             status: 'pending_payment',
             payment_status: 'unpaid',
-            fee_cents: this.inserts.fee_cents || 4999
+            fee_cents: raw.data.payment?.amount || this.inserts.fee_cents
           };
         } else {
           const raw = await apiFetch('/appointments/normal', {
