@@ -5,7 +5,7 @@ import ApiError from '../utils/ApiError.js';
 
 export const generateRoomName = (appointmentId) => {
   const sanitizedId = appointmentId.toString().slice(-12);
-  return `MediConsult-${sanitizedId}-${uuidv4().slice(0, 8)}`;
+  return `Premedi Lanka-${sanitizedId}-${uuidv4().slice(0, 8)}`;
 };
 
 export const buildMeetingUrl = (roomName) => {

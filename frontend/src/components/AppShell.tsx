@@ -98,9 +98,9 @@ export function AppShell({
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-2.5">
           {/* Brand section */}
           <Link to="/" className="flex items-center gap-3">
-            <img src={logo} alt="MediConsult Logo" className="h-10 w-[60px] rounded-lg object-cover" />
+            <img src={logo} alt="Premedi Lanka Logo" className="h-10 w-[60px] rounded-lg object-cover" />
             <div>
-              <div className="text-xl font-bold text-slate-800 tracking-tight">MediConsult</div>
+              <div className="text-xl font-bold text-slate-800 tracking-tight">Premedi Lanka</div>
               <div className="text-[10px] font-semibold text-slate-600 tracking-widest uppercase">Healthcare Platform</div>
             </div>
           </Link>

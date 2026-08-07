@@ -171,7 +171,7 @@ const PrescriptionPadV2: React.FC<PrescriptionPadV2Props> = ({
       >
         <img
           src={logo}
-          alt="MediConsult Logo"
+          alt="Premedi Lanka Logo"
           style={{
             height: "clamp(30px, 8cqw, 50px)",
             width: "auto",

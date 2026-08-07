@@ -57,7 +57,7 @@ const apiFetch = async (path: string, options: any = {}) => {
     });
   } catch {
     throw new Error(
-      'Cannot reach the MediConsult API. Start the backend with: cd backend && npm run dev'
+      'Cannot reach the Premedi Lanka API. Start the backend with: cd backend && npm run dev'
     );
   }
 

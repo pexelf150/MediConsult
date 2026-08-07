@@ -21,7 +21,7 @@ import logo from "@/assets/logo.jpeg";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "MediConsult — Online Doctor Consultations" },
+      { title: "Premedi Lanka — Online Doctor Consultations" },
       {
         name: "description",
         content:
@@ -133,10 +133,10 @@ function Landing() {
       <header className="sticky top-0 z-30 w-full border-b border-white/20 bg-white/10 backdrop-blur-lg">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link to="/" className="flex items-center gap-3">
-            <img src={logo} alt="MediConsult Logo" className="h-14 w-[84px] rounded-lg object-cover" />
+            <img src={logo} alt="Premedi Lanka Logo" className="h-14 w-[84px] rounded-lg object-cover" />
             <div className="leading-tight">
               <div className="text-xl font-semibold tracking-tight text-white">
-                MediConsult
+                Premedi Lanka
               </div>
               <div className="text-[10px] uppercase tracking-[0.18em] text-white/70">
                 Online Care
@@ -269,7 +269,7 @@ function Landing() {
                 <div className="mb-6 text-center">
 
                   <h2 className="text-2xl font-semibold text-emerald-700">
-                    Welcome to MediConsult
+                    Welcome to Premedi Lanka
                   </h2>
 
 
@@ -306,8 +306,8 @@ function Landing() {
           <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
             <div className="flex flex-col gap-3">
               <Link to="/" className="flex items-center gap-2">
-                <img src={logo} alt="MediConsult Logo" className="h-10 w-[60px] rounded-lg object-cover" />
-                <span className="text-base font-semibold tracking-tight text-white">MediConsult</span>
+                <img src={logo} alt="Premedi Lanka Logo" className="h-10 w-[60px] rounded-lg object-cover" />
+                <span className="text-base font-semibold tracking-tight text-white">Premedi Lanka</span>
               </Link>
               <p className="text-xs text-white/50 leading-relaxed mt-2">
                 Secure and convenient telehealth services bringing certified medical care directly to your screen.
@@ -347,7 +347,7 @@ function Landing() {
             </div>
           </div>
           <div className="mt-12 border-t border-white/5 pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-white/40">
-            <span>© {new Date().getFullYear()} MediConsult. All rights reserved.</span>
+            <span>© {new Date().getFullYear()} Premedi Lanka. All rights reserved.</span>
             <div className="flex gap-4">
               <a href="#" className="hover:text-white transition-colors">Twitter</a>
               <a href="#" className="hover:text-white transition-colors">LinkedIn</a>

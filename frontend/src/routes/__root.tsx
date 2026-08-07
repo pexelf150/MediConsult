@@ -76,13 +76,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "MediConsult — Online Doctor Consultations" },
+      { title: "Premedi Lanka — Online Doctor Consultations" },
       {
         name: "description",
         content:
           "Book urgent or scheduled online doctor consultations with secure video visits and instant patient–doctor coordination.",
       },
-      { property: "og:title", content: "MediConsult — Online Doctor Consultations" },
+      { property: "og:title", content: "Premedi Lanka — Online Doctor Consultations" },
       {
         property: "og:description",
         content: "Secure online doctor consultations — urgent or scheduled video visits.",
