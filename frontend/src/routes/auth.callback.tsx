@@ -42,16 +42,14 @@ function AuthCallback() {
             const userRole = user.role;
             console.log('Redirecting to dashboard with role:', userRole);
             
-            // Small delay to ensure localStorage is set before redirect
-            setTimeout(() => {
-              if (userRole === 'doctor') {
-                console.log('Redirecting to /doctor');
-                window.location.href = '/doctor';
-              } else {
-                console.log('Redirecting to /patient');
-                window.location.href = '/patient';
-              }
-            }, 100);
+            // Redirect immediately without setTimeout
+            if (userRole === 'doctor') {
+              console.log('Redirecting to /doctor');
+              navigate({ to: '/doctor', replace: true });
+            } else {
+              console.log('Redirecting to /patient');
+              navigate({ to: '/patient', replace: true });
+            }
           } else {
             console.error('No user data in response');
             setError("Authentication failed - no user data");
