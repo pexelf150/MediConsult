@@ -585,7 +585,14 @@ class CustomSupabaseQueryBuilder {
         return null;
       }
 
-      const raw = await apiFetch('/notifications?limit=50');
+      // Handle is_read filter
+      const isReadFilter = this.filters.find(f => f.field === 'is_read');
+      let url = '/notifications?limit=50';
+      if (isReadFilter && isReadFilter.value === false) {
+        url += '&unreadOnly=true';
+      }
+
+      const raw = await apiFetch(url);
       const notifications = raw.data?.notifications || [];
       const mapped = notifications.map((n: any) => ({
         id: n._id,

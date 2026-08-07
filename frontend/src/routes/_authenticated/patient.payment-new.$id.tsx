@@ -20,6 +20,20 @@ function PaymentNewPage() {
     enabled: !!id,
   });
 
+  const { data: appointment } = useQuery({
+    queryKey: ["appointment", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("appointments")
+        .select("*, doctors!inner(*)")
+        .eq("id", id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
+
   const { data: exchangeRate } = useQuery({
     queryKey: ["exchangeRate"],
     queryFn: async () => {
@@ -45,6 +59,7 @@ function PaymentNewPage() {
       appointmentId={id}
       amount={amount}
       currency={currency}
+      appointment={appointment}
     />
   );
 }

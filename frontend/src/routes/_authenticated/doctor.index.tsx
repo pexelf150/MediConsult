@@ -31,6 +31,11 @@ function RescheduleModal({
   const [loading, setLoading] = useState(false);
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+  const [selectedDoctor, setSelectedDoctor] = useState("");
+  const [doctors, setDoctors] = useState<any[]>([]);
+  const [loadingDoctors, setLoadingDoctors] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [removingNotification, setRemovingNotification] = useState<string | null>(null);
 
   const { data: userData } = useQuery({
     queryKey: ["me"],
@@ -290,6 +295,7 @@ function DoctorDashboard() {
       const { data, error } = await supabase
         .from("notifications")
         .select("*")
+        .eq("is_read", false)
         .order("created_at", { ascending: false })
         .limit(10);
       if (error) throw error;
@@ -378,16 +384,17 @@ function DoctorDashboard() {
 
   const markRead = async (id: string) => {
     try {
-      const { error } = await supabase.from("notifications").delete().eq("id", id);
+      const { error } = await supabase
+        .from("notifications")
+        .update({ is_read: true })
+        .eq("id", id);
       if (error) {
-        console.error("Error deleting notification:", error);
         toast.error("Failed to mark notification as read");
       } else {
         toast.success("Notification marked as read");
         qc.invalidateQueries({ queryKey: ["doctor-notifications"] });
       }
     } catch (error) {
-      console.error("Error in markRead:", error);
       toast.error("Failed to mark notification as read");
     }
   };
@@ -554,33 +561,38 @@ function DoctorDashboard() {
               {!notifications || notifications.length === 0 ? (
                 <li className="text-sm text-muted-foreground">No notifications.</li>
               ) : (
-                notifications.map((n) => (
-                  <li
-                    key={n.id}
-                    className={
-                      "rounded-lg border p-3 text-sm " +
-                      (n.is_urgent
-                        ? "border-urgent/30 bg-urgent/5"
-                        : "bg-background")
-                    }
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <div className="font-medium">{n.title}</div>
-                        <div className="text-xs text-muted-foreground">{n.message}</div>
-                        <div className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-                          {new Date(n.created_at).toLocaleString()}
+                <AnimatePresence>
+                  {notifications.map((n) => (
+                    <motion.li
+                      key={n.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 100, transition: { duration: 0.3 } }}
+                      className={
+                        "rounded-lg border p-3 text-sm " +
+                        (n.is_urgent
+                          ? "border-urgent/30 bg-urgent/5"
+                          : "bg-background")
+                      }
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <div className="font-medium">{n.title}</div>
+                          <div className="text-xs text-muted-foreground">{n.message}</div>
+                          <div className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                            {new Date(n.created_at).toLocaleString()}
+                          </div>
                         </div>
+                        <button
+                          className="text-xs text-primary hover:underline"
+                          onClick={() => markRead(n.id)}
+                        >
+                          Mark read
+                        </button>
                       </div>
-                      <button
-                        className="text-xs text-primary hover:underline"
-                        onClick={() => markRead(n.id)}
-                      >
-                        Mark read
-                      </button>
-                    </div>
-                  </li>
-                ))
+                    </motion.li>
+                  ))}
+                </AnimatePresence>
               )}
             </ul>
           </div>

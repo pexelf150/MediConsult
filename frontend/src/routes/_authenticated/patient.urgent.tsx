@@ -15,6 +15,9 @@ function UrgentFlow() {
   const navigate = useNavigate();
   const [symptoms, setSymptoms] = useState("");
   const [contactPhone, setContactPhone] = useState("");
+  const [selectedDoctor, setSelectedDoctor] = useState("");
+  const [doctors, setDoctors] = useState<any[]>([]);
+  const [loadingDoctors, setLoadingDoctors] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -34,6 +37,27 @@ function UrgentFlow() {
     fetchProfile();
   }, []);
 
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const { data: docs, error } = await supabase
+          .from("doctors")
+          .select("id, full_name, specialty, urgent_fee_cents")
+          .eq("is_available", true);
+        if (error) throw error;
+        setDoctors(docs || []);
+        if (docs && docs.length > 0) {
+          setSelectedDoctor(docs[0].id);
+        }
+      } catch (err) {
+        console.error("Failed to fetch doctors:", err);
+      } finally {
+        setLoadingDoctors(false);
+      }
+    };
+    fetchDoctors();
+  }, []);
+
   const onNext = async (e: React.FormEvent) => {
     e.preventDefault();
     if (symptoms.trim().length < 10) {
@@ -44,19 +68,15 @@ function UrgentFlow() {
       toast.error("Please provide your contact phone number.");
       return;
     }
+    if (!selectedDoctor) {
+      toast.error("Please select a doctor.");
+      return;
+    }
     setSubmitting(true);
     try {
-      // Pick the first available doctor
-      const { data: doc, error: docErr } = await supabase
-        .from("doctors")
-        .select("id, urgent_fee_cents")
-        .eq("is_available", true)
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      if (docErr) throw docErr;
-      if (!doc) {
-        toast.error("No doctors are available right now. Please try again shortly.");
+      const selectedDoc = doctors.find(d => d.id === selectedDoctor);
+      if (!selectedDoc) {
+        toast.error("Selected doctor not found.");
         return;
       }
 
@@ -67,13 +87,13 @@ function UrgentFlow() {
         .from("appointments")
         .insert({
           patient_id: user.user.id,
-          doctor_id: doc.id,
+          doctor_id: selectedDoctor,
           appointment_type: "urgent",
           status: "pending_payment",
           payment_status: "unpaid",
           symptoms,
           contact_phone: contactPhone,
-          fee_cents: doc.urgent_fee_cents,
+          fee_cents: selectedDoc.urgent_fee_cents,
           scheduled_at: new Date().toISOString(),
         })
         .select("id")
@@ -89,7 +109,7 @@ function UrgentFlow() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-5xl">
       <div className="mb-6 flex items-center gap-3">
         <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-urgent text-urgent-foreground">
           <Activity className="h-5 w-5" />
@@ -102,47 +122,92 @@ function UrgentFlow() {
         </div>
       </div>
 
-      <form onSubmit={onNext} className="rounded-2xl border bg-card p-6 shadow-soft">
-        <Label htmlFor="symptoms" className="text-base">
-          Describe your symptoms
-        </Label>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Include onset, severity, and anything else the doctor should know.
-        </p>
-        <Textarea
-          id="symptoms"
-          className="mt-3 min-h-40"
-          placeholder="E.g. Sharp chest pain on the left side starting an hour ago, shortness of breath…"
-          value={symptoms}
-          onChange={(e) => setSymptoms(e.target.value)}
-          required
-          maxLength={2000}
-        />
-        <div className="mt-2 text-right text-xs text-muted-foreground">
-          {symptoms.length}/2000
+      <form onSubmit={onNext} className="grid gap-6 lg:grid-cols-3">
+        {/* Left side - Doctor selection */}
+        <div className="lg:col-span-1 rounded-2xl border bg-card p-6 shadow-soft">
+          <Label htmlFor="doctor" className="text-base">
+            Select a doctor
+          </Label>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Choose an available doctor for your urgent consultation.
+          </p>
+          {loadingDoctors ? (
+            <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Loading available doctors...
+            </div>
+          ) : doctors.length === 0 ? (
+            <p className="mt-3 text-sm text-muted-foreground">
+              No doctors are available right now. Please try again shortly.
+            </p>
+          ) : (
+            <div className="mt-3 space-y-2">
+              {doctors.map((doctor) => (
+                <div
+                  key={doctor.id}
+                  className={`flex items-center justify-between rounded-lg border p-3 cursor-pointer transition-colors ${
+                    selectedDoctor === doctor.id
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                  onClick={() => setSelectedDoctor(doctor.id)}
+                >
+                  <div className="flex-1">
+                    <div className="font-medium text-sm">{doctor.full_name}</div>
+                    <div className="text-xs text-muted-foreground">{doctor.specialty}</div>
+                  </div>
+                  <div className="text-sm font-semibold">
+                    Rs. {(doctor.urgent_fee_cents / 100).toFixed(2)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        <div className="mt-4 grid gap-1.5">
-          <Label htmlFor="contactPhone">Contact Phone *</Label>
-          <input
-            id="contactPhone"
-            type="tel"
-            placeholder="e.g. +1234567890"
-            value={contactPhone}
-            onChange={(e) => setContactPhone(e.target.value)}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        {/* Right side - Symptoms and contact */}
+        <div className="lg:col-span-2 rounded-2xl border bg-card p-6 shadow-soft">
+          <Label htmlFor="symptoms" className="text-base">
+            Describe your symptoms
+          </Label>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Include onset, severity, and anything else the doctor should know.
+          </p>
+          <Textarea
+            id="symptoms"
+            className="mt-3 min-h-40"
+            placeholder="E.g. Sharp chest pain on the left side starting an hour ago, shortness of breath…"
+            value={symptoms}
+            onChange={(e) => setSymptoms(e.target.value)}
             required
+            maxLength={2000}
           />
-        </div>
+          <div className="mt-2 text-right text-xs text-muted-foreground">
+            {symptoms.length}/2000
+          </div>
 
-        <div className="mt-5 flex justify-end">
-          <Button type="submit" disabled={submitting} size="lg" className="gap-1.5">
-            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : (
-              <>
-                Next <ArrowRight className="h-4 w-4" />
-              </>
-            )}
-          </Button>
+          <div className="mt-4 grid gap-1.5">
+            <Label htmlFor="contactPhone">Contact Phone *</Label>
+            <input
+              id="contactPhone"
+              type="tel"
+              placeholder="e.g. +1234567890"
+              value={contactPhone}
+              onChange={(e) => setContactPhone(e.target.value)}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              required
+            />
+          </div>
+
+          <div className="mt-5 flex justify-end">
+            <Button type="submit" disabled={submitting} size="lg" className="gap-1.5">
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : (
+                <>
+                  Next <ArrowRight className="h-4 w-4" />
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </form>
     </div>
