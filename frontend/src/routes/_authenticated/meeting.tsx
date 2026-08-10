@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Loader2, ArrowLeft, Plus, Trash2, Download, FileText, CheckCircle2, Eye, X } from "lucide-react";
+import { Loader2, ArrowLeft, Plus, Trash2, Download, FileText, CheckCircle2, Eye, X, User, Mail, Calendar, Clock, AlertCircle, Activity } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import jsPDF from "jspdf";
@@ -40,40 +39,48 @@ function MeetingPage() {
   const [previewPrescription, setPreviewPrescription] = useState(false);
 
   // Get current user role
-  const { data: currentUser } = useQuery({
+  const { data: userData } = useQuery({
     queryKey: ["currentUser"],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
-      
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-      
-      return profile;
+      const userStr = localStorage.getItem('user');
+      if (!userStr) return null;
+      try {
+        const user = JSON.parse(userStr);
+        // Ensure _id is set from id if missing
+        if (user.id && !user._id) {
+          user._id = user.id;
+        }
+        return user;
+      } catch (e) {
+        console.error('Failed to parse user data', e);
+        return null;
+      }
     },
   });
 
-  const isDoctor = currentUser?.role === "doctor";
+  const isDoctor = userData?.role === "doctor";
 
-  // Get doctor's profile for prescription
   const { data: doctorProfile } = useQuery({
     queryKey: ["doctor-profile"],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      return profile;
+      const userStr = localStorage.getItem('user');
+      if (!userStr) return null;
+      try {
+        const user = JSON.parse(userStr);
+        const response = await fetch(`/api/doctors/${user._id}/profile`, {
+          credentials: 'include',
+        });
+        const result = await response.json();
+        if (response.ok && result.data) {
+          return result.data;
+        }
+        return null;
+      } catch (e) {
+        console.error('Failed to fetch doctor profile', e);
+        return null;
+      }
     },
-    enabled: isDoctor,
+    enabled: userData?.role === "doctor",
   });
 
   const { data: appointment, isLoading } = useQuery({
@@ -317,10 +324,15 @@ function MeetingPage() {
       <div className="border-b bg-card p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/doctor" })}>
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back
+            <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/patient/appointments" })}>
+              <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-xl font-semibold">Consultation</h1>
+            <div className="flex items-center gap-3">
+              <img src="/logo.jpeg" alt="Logo" className="h-16 w-24 object-contain" />
+              <Badge variant={appointment.type === "urgent" ? "destructive" : appointment.type === "normal" ? "default" : "default"} className={`text-xs ${appointment.type === "normal" ? "bg-yellow-500 text-white hover:bg-yellow-600" : ""}`}>
+                {appointment.type === "urgent" ? "Urgent" : "Normal"}
+              </Badge>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {isDoctor && !appointment.doctorApproved && appointment.status !== "completed" && appointment.status !== "cancelled" && (
@@ -333,9 +345,6 @@ function MeetingPage() {
                 <CheckCircle2 className="mr-1.5 h-4 w-4" /> Complete Session
               </Button>
             )}
-            <Badge variant={appointment.type === "urgent" ? "destructive" : "default"}>
-              {appointment.type === "urgent" ? "Urgent" : "Normal"}
-            </Badge>
           </div>
         </div>
       </div>
@@ -362,59 +371,92 @@ function MeetingPage() {
         <div className="w-96 overflow-y-auto border-l bg-card">
           <div className="p-4 space-y-4">
             {/* Appointment Details */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Appointment Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div>
-                  <Label className="text-xs text-muted-foreground">Patient</Label>
-                  <p className="font-medium">{appointment.patient ? `${appointment.patient.firstName} ${appointment.patient.lastName}` : "Unknown"}</p>
-                  <p className="text-sm text-muted-foreground">{appointment.patient?.email}</p>
+            <div className="rounded-[14px] p-[18px_16px_16px] relative text-white shadow-lg" style={{ background: 'linear-gradient(180deg, #4fa8bd 0%, #4098b0 100%)' }}>
+              <h1 className="text-[16px]  text-center">Appointment Details</h1>
+
+              <div className="flex items-center gap-[10px] py-[12px_0] border-b border-white/18 text-[13px]">
+                <div className="w-4 h-4 flex-shrink-0 flex items-center justify-center">
+                  <User className="w-full h-full stroke-white/85" strokeWidth={1.8} fill="none" />
                 </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Scheduled Time</Label>
-                  <p className="font-medium">{appointment.scheduledAt ? new Date(appointment.scheduledAt).toLocaleString() : "Not scheduled"}</p>
+                <div className="flex-1">{appointment.patient ? `${appointment.patient.firstName} ${appointment.patient.lastName}` : "Unknown"}</div>
+              </div>
+
+              <div className="flex items-center gap-[10px] py-[12px_0] border-b border-white/18 text-[13px]">
+                <div className="w-4 h-4 flex-shrink-0 flex items-center justify-center">
+                  <Mail className="w-full h-full stroke-white/85" strokeWidth={1.8} fill="none" />
                 </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Status</Label>
-                  <Badge variant={appointment.status === "completed" ? "default" : "secondary"}>
-                    {appointment.status}
-                  </Badge>
+                <div className="flex-1 text-white/75 text-[12px]">{appointment.patient?.email || "No email"}</div>
+              </div>
+
+              <div className="flex items-center gap-[10px] py-[12px_0] border-b border-white/18 text-[13px]">
+                <div className="w-4 h-4 flex-shrink-0 flex items-center justify-center">
+                  <Calendar className="w-full h-full stroke-white/85" strokeWidth={1.8} fill="none" />
                 </div>
-                {appointment.symptoms && (
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Symptoms</Label>
-                    <p className="text-sm">{appointment.symptoms}</p>
+                <div className="flex-1">{appointment.scheduledAt ? new Date(appointment.scheduledAt).toLocaleDateString() : "Not scheduled"}</div>
+              </div>
+
+              <div className="flex items-center gap-[6px] py-[12px_0]">
+                <div className="w-[14px] h-[14px] flex items-center justify-center">
+                  <Clock className="w-full h-full stroke-white/85" strokeWidth={1.8} fill="none" />
+                </div>
+                <div className="flex-1 bg-white text-[#2d2d2d] rounded-[6px] px-[10px] py-[7px] flex items-center gap-[8px] text-[13px] font-semibold">
+                  <Clock className="w-3.5 h-3.5 stroke-[#2d2d2d]" strokeWidth={1.8} fill="none" />
+                  {appointment.scheduledAt ? new Date(appointment.scheduledAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : "Not scheduled"}
+                </div>
+              </div>
+
+              <div className="py-[12px_2px] text-[13px] text-white/90 border-b border-white/18">
+                {appointment.type === "urgent" ? "Urgent Consultation" : "Normal Consultation"}
+              </div>
+
+              {appointment.symptoms && (
+                <div className="flex items-center gap-[10px] py-[12px_0] border-b border-white/18 text-[13px]">
+                  <div className="w-4 h-4 flex-shrink-0 flex items-center justify-center">
+                    <AlertCircle className="w-full h-full stroke-white/85" strokeWidth={1.8} fill="none" />
                   </div>
-                )}
-                {appointment.healthMetrics && (
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Health Metrics</Label>
-                    <div className="mt-2 space-y-1 text-sm">
-                      {appointment.healthMetrics.cholesterol?.value && (
-                        <div className="flex justify-between">
-                          <span>Cholesterol:</span>
-                          <span className="font-medium">{appointment.healthMetrics.cholesterol.value} mg/dL</span>
-                        </div>
-                      )}
-                      {appointment.healthMetrics.sugar?.value && (
-                        <div className="flex justify-between">
-                          <span>Blood Sugar:</span>
-                          <span className="font-medium">{appointment.healthMetrics.sugar.value} mg/dL</span>
-                        </div>
-                      )}
-                      {appointment.healthMetrics.bloodPressure?.value && (
-                        <div className="flex justify-between">
-                          <span>Blood Pressure:</span>
-                          <span className="font-medium">{appointment.healthMetrics.bloodPressure.value}</span>
-                        </div>
-                      )}
+                  <div className="flex-1 text-white/85">{appointment.symptoms}</div>
+                </div>
+              )}
+
+              {appointment.healthMetrics && (
+                <div className="py-[12px_0] border-b border-white/18 text-[13px]">
+                  <div className="flex items-center gap-[10px] py-[8px_0]">
+                    <div className="w-4 h-4 flex-shrink-0 flex items-center justify-center">
+                      <Activity className="w-full h-full stroke-white/85" strokeWidth={1.8} fill="none" />
                     </div>
+                    <div className="flex-1 text-white/85">Health Metrics</div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                  <div className="pl-[26px] space-y-1 text-[12px] text-white/75">
+                    {appointment.healthMetrics.cholesterol?.value && (
+                      <div className="flex justify-between">
+                        <span>Cholesterol:</span>
+                        <span className="font-medium">{appointment.healthMetrics.cholesterol.value} mg/dL</span>
+                      </div>
+                    )}
+                    {appointment.healthMetrics.sugar?.value && (
+                      <div className="flex justify-between">
+                        <span>Blood Sugar:</span>
+                        <span className="font-medium">{appointment.healthMetrics.sugar.value} mg/dL</span>
+                      </div>
+                    )}
+                    {appointment.healthMetrics.bloodPressure?.value && (
+                      <div className="flex justify-between">
+                        <span>Blood Pressure:</span>
+                        <span className="font-medium">{appointment.healthMetrics.bloodPressure.value}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-[10px] pt-[12px] text-[13px]">
+                <span>Status:</span>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                  <span className="font-semibold">In call</span>
+                </div>
+              </div>
+            </div>
 
             {/* Prescription Form - Only for Doctors */}
             {isDoctor && (

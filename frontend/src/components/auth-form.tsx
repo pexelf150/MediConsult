@@ -2,7 +2,6 @@ import { useState } from "react";
 import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -65,15 +64,39 @@ export function AuthForm({ onSuccess, initialRole, onForgotPassword }: AuthFormP
             setSubmitting(false);
             return;
           }
-          const { error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-              emailRedirectTo: window.location.origin,
-              data: { full_name: fullName, role, specialty, age, gender, phone },
-            },
+          // Use backend API for patient registration
+          const nameParts = fullName.trim().split(' ');
+          const firstName = nameParts[0] || '';
+          const lastName = nameParts.slice(1).join(' ') || '';
+
+          const response = await fetch('/api/auth/patient/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              email,
+              password,
+              firstName,
+              lastName,
+              phone,
+              age: ageNum,
+              gender,
+            }),
           });
-          if (error) throw error;
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            throw new Error(result.message || 'Registration failed');
+          }
+
+          // Store user data in localStorage
+          if (result.data?.user) {
+            localStorage.setItem('user', JSON.stringify(result.data.user));
+            localStorage.setItem('userId', result.data.user._id || result.data.user.id);
+            localStorage.setItem('userRole', result.data.user.role);
+          }
+
           toast.success("Account created — you're signed in.");
         } else if (role === "doctor") {
           // Use backend API for doctor registration
@@ -96,11 +119,18 @@ export function AuthForm({ onSuccess, initialRole, onForgotPassword }: AuthFormP
           });
           
           const result = await response.json();
-          
+
           if (!response.ok) {
             throw new Error(result.message || 'Registration failed');
           }
-          
+
+          // Store user data in localStorage
+          if (result.data?.user) {
+            localStorage.setItem('user', JSON.stringify(result.data.user));
+            localStorage.setItem('userId', result.data.user._id || result.data.user.id);
+            localStorage.setItem('userRole', result.data.user.role);
+          }
+
           toast.success("Account created — you're signed in.");
           if (onSuccess) onSuccess(role);
         }
@@ -115,11 +145,18 @@ export function AuthForm({ onSuccess, initialRole, onForgotPassword }: AuthFormP
         });
         
         const result = await response.json();
-        
+
         if (!response.ok) {
           throw new Error(result.message || 'Login failed');
         }
-        
+
+        // Store user data in localStorage
+        if (result.data?.user) {
+          localStorage.setItem('user', JSON.stringify(result.data.user));
+          localStorage.setItem('userId', result.data.user._id || result.data.user.id);
+          localStorage.setItem('userRole', result.data.user.role);
+        }
+
         toast.success("Welcome back!");
         if (onSuccess) onSuccess(role);
       }

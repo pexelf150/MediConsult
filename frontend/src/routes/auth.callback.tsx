@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 
@@ -7,7 +7,6 @@ export const Route = createFileRoute("/auth/callback")({
 });
 
 function AuthCallback() {
-  const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -42,14 +41,16 @@ function AuthCallback() {
             const userRole = user.role;
             console.log('Redirecting to dashboard with role:', userRole);
             
-            // Redirect immediately without setTimeout
-            if (userRole === 'doctor') {
-              console.log('Redirecting to /doctor');
-              navigate({ to: '/doctor', replace: true });
-            } else {
-              console.log('Redirecting to /patient');
-              navigate({ to: '/patient', replace: true });
-            }
+            // Use window.location for full page reload to avoid router state issues
+            setTimeout(() => {
+              if (userRole === 'doctor') {
+                console.log('Redirecting to /doctor');
+                window.location.href = '/doctor';
+              } else {
+                console.log('Redirecting to /patient');
+                window.location.href = '/patient';
+              }
+            }, 100);
           } else {
             console.error('No user data in response');
             setError("Authentication failed - no user data");
@@ -65,7 +66,7 @@ function AuthCallback() {
     };
 
     handleCallback();
-  }, [navigate]);
+  }, []);
 
   if (error) {
     return (
@@ -74,7 +75,7 @@ function AuthCallback() {
           <h1 className="text-2xl font-semibold text-red-600">Authentication Error</h1>
           <p className="mt-2 text-sm text-muted-foreground">{error}</p>
           <button
-            onClick={() => navigate({ to: "/" })}
+            onClick={() => window.location.href = '/'}
             className="mt-4 rounded-full bg-emerald-600 px-6 py-2 text-sm font-medium text-white hover:bg-emerald-700"
           >
             Return to Home

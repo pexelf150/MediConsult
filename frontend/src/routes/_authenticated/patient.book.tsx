@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -101,15 +100,15 @@ function BookNormal() {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("phone")
-          .eq("id", user.id)
-          .single();
-        if (profile?.phone) {
-          setContactPhone(profile.phone);
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          if (user.phone) {
+            setContactPhone(user.phone);
+          }
+        } catch (e) {
+          console.error('Failed to parse user data', e);
         }
       }
     };
@@ -141,33 +140,47 @@ function BookNormal() {
   const { data: doctors, isLoading: doctorsLoading } = useQuery({
     queryKey: ["doctors"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("doctors")
-        .select("id, full_name, specialty, bio, consultation_fee_cents, is_available")
-        .eq("is_available", true);
-      if (error) throw error;
-      return data;
+      const response = await fetch('/api/doctors?available=true', {
+        credentials: 'include',
+      });
+      const result = await response.json();
+      if (response.ok && result.data) {
+        return result.data.doctors || result.data;
+      }
+      return [];
     },
   });
 
   // ── Data: weekly capacity ────────────────────────────────────────────────
   const { data: weekCapacity, isLoading: capacityLoading } = useQuery({
-    queryKey: ["week-capacity", selectedDoctor?.id, weekDates.join(",")],
+    queryKey: ["week-capacity", selectedDoctor?._id, weekDates.join(",")],
     enabled: !!selectedDoctor && step === "week",
     queryFn: async () => {
-      const { data } = await supabase.getScheduleCapacity(selectedDoctor!.id, weekDates);
-      return data ?? [];
+      const response = await fetch(`/api/doctors/${selectedDoctor!._id}/schedule/capacity?dates=${weekDates.join(',')}`, {
+        credentials: 'include',
+      });
+      const result = await response.json();
+      if (response.ok && result.data) {
+        return result.data.capacity || [];
+      }
+      return [];
     },
     refetchInterval: 15_000,
   });
 
   // ── Data: slot status for selected date ──────────────────────────────────
   const { data: slotStatus, refetch: refetchSlots } = useQuery({
-    queryKey: ["slot-status", selectedDoctor?.id, selectedDate],
+    queryKey: ["slot-status", selectedDoctor?._id, selectedDate],
     enabled: !!selectedDoctor && !!selectedDate && step === "slots",
     queryFn: async () => {
-      const { data } = await supabase.getSlotStatus(selectedDoctor!.id, selectedDate!);
-      return data ?? { booked: [], reserved: [] };
+      const response = await fetch(`/api/doctors/${selectedDoctor!._id}/slots?date=${selectedDate}`, {
+        credentials: 'include',
+      });
+      const result = await response.json();
+      if (response.ok && result.data) {
+        return result.data;
+      }
+      return { booked: [], reserved: [] };
     },
     refetchInterval: 10_000,
   });
@@ -219,22 +232,29 @@ function BookNormal() {
     setReserving(true);
     try {
       const scheduledAt = new Date(`${selectedDate}T${time}:00`).toISOString();
-      console.log('Reserving slot:', { doctorId: selectedDoctor.id, scheduledAt });
-      const { data, error } = await supabase.reserveSlot(selectedDoctor.id, scheduledAt);
-      console.log('Reservation response:', data, error);
-      if (error) throw error;
+      console.log('Reserving slot:', { doctorId: selectedDoctor._id, scheduledAt });
+      const response = await fetch('/api/appointments/reserve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          doctorId: selectedDoctor._id,
+          scheduledAt: scheduledAt,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || 'Reservation failed');
       console.log('Setting reservation state:', {
-        reservationId: data.reservationId,
-        expiresAt: data.expiresAt,
-        expiresAtType: typeof data.expiresAt,
-        scheduledAt: data.scheduledAt,
-        doctorId: data.doctorId,
+        reservationId: result.data.reservationId,
+        expiresAt: result.data.expiresAt,
+        scheduledAt: result.data.scheduledAt,
+        doctorId: result.data.doctorId,
       });
       setReservation({
-        reservationId: data.reservationId,
-        expiresAt: data.expiresAt,
-        scheduledAt: data.scheduledAt,
-        doctorId: data.doctorId,
+        reservationId: result.data.reservationId,
+        expiresAt: result.data.expiresAt,
+        scheduledAt: result.data.scheduledAt,
+        doctorId: result.data.doctorId,
       });
       setStep("reserved");
     } catch (err: any) {
@@ -258,19 +278,31 @@ function BookNormal() {
     }
     setSubmitting(true);
     try {
-      const { data, error } = await supabase.confirmReservation(
-        reservation.reservationId,
-        symptoms,
-        "medium",
-        cholesterol ? parseFloat(cholesterol) : undefined,
-        sugar ? parseFloat(sugar) : undefined,
-        bloodPressure || undefined,
-        contactPhone,
-        bloodGroup || undefined
-      );
-      if (error) throw error;
+      const response = await fetch('/api/appointments/reserve/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          reservationId: reservation.reservationId,
+          symptoms,
+          priority: "medium",
+          cholesterol: cholesterol ? parseFloat(cholesterol) : undefined,
+          sugar: sugar ? parseFloat(sugar) : undefined,
+          bloodPressure: bloodPressure || undefined,
+          contactPhone: contactPhone,
+          bloodGroup: bloodGroup || undefined
+        }),
+      });
+      const result = await response.json();
+      console.log('Confirm response:', result);
+      if (!response.ok) throw new Error(result.message || 'Confirmation failed');
       toast.success("Proceeding to payment...");
-      navigate({ to: "/patient/payment-new/$id", params: { id: data.paymentId } });
+      const paymentId = result.data.paymentId;
+      console.log('Navigating to payment with ID:', paymentId);
+      if (!paymentId) {
+        throw new Error('Payment ID not returned from server');
+      }
+      navigate({ to: "/patient/payment-new/$id", params: { id: paymentId } });
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -280,7 +312,12 @@ function BookNormal() {
 
   const onBack = useCallback(async () => {
     if (reservation) {
-      await supabase.releaseReservation(reservation.reservationId);
+      await fetch('/api/appointments/release', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ reservation_id: reservation.reservationId }),
+      });
       setReservation(null);
     }
     if (step === "reserved") setStep("slots");
@@ -339,10 +376,10 @@ function BookNormal() {
                           <Stethoscope className="h-5 w-5" />
                         </div>
                         <div className="flex-1">
-                          <div className="font-semibold">{d.full_name}</div>
-                          <div className="text-sm text-muted-foreground">{d.specialty}</div>
+                          <div className="font-semibold">{d.fullName || d.firstName + ' ' + d.lastName}</div>
+                          <div className="text-sm text-muted-foreground">{d.specialization}</div>
                           <div className="mt-1 text-xs text-muted-foreground">
-                            ₹{(d.consultation_fee_cents / 100).toFixed(2)} per visit
+                            LKR {d.consultationFee || 2500} per visit
                           </div>
                           {d.bio && <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{d.bio}</p>}
                         </div>
@@ -362,7 +399,7 @@ function BookNormal() {
               <div className="flex items-center gap-2">
                 <CalendarDays className="h-5 w-5 text-primary" />
                 <h2 className="text-lg font-semibold">
-                  Dr. {selectedDoctor?.full_name} — week of {weekDates[0]}
+                  Dr. {selectedDoctor?.fullName || selectedDoctor?.firstName + ' ' + selectedDoctor?.lastName} — week of {weekDates[0]}
                 </h2>
               </div>
               <div className="flex gap-1">
@@ -509,7 +546,7 @@ function BookNormal() {
                   </span>
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {new Date(reservation.scheduledAt).toLocaleString()} with Dr. {selectedDoctor?.full_name}
+                  {new Date(reservation.scheduledAt).toLocaleString()} with Dr. {selectedDoctor?.fullName || selectedDoctor?.firstName + ' ' + selectedDoctor?.lastName}
                 </p>
               </div>
             </div>
@@ -615,7 +652,7 @@ function BookNormal() {
               <div className="mt-4 rounded-xl bg-muted/40 p-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Consultation fee</span>
-                  <span className="font-semibold">₹{(selectedDoctor?.consultation_fee_cents / 100).toFixed(2)}</span>
+                  <span className="font-semibold">LKR {selectedDoctor?.consultationFee || 2500}</span>
                 </div>
               </div>
 

@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,7 +38,21 @@ function RescheduleModal({
 
   const { data: userData } = useQuery({
     queryKey: ["me"],
-    queryFn: async () => (await supabase.auth.getUser()).data.user,
+    queryFn: async () => {
+      const userStr = localStorage.getItem('user');
+      if (!userStr) return null;
+      try {
+        const user = JSON.parse(userStr);
+        // Ensure _id is set from id if missing
+        if (user.id && !user._id) {
+          user._id = user.id;
+        }
+        return user;
+      } catch (e) {
+        console.error('Failed to parse user data', e);
+        return null;
+      }
+    },
   });
 
   // Fetch available slots when date is selected
@@ -143,7 +156,7 @@ function RescheduleModal({
                 </div>
               )}
               <div className="mt-2 grid grid-cols-3 gap-2 max-h-60 overflow-y-auto">
-                {availableSlots.length === 0 ? (
+                {!Array.isArray(availableSlots) || availableSlots.length === 0 ? (
                   <p className="col-span-3 text-sm text-muted-foreground">No slots available</p>
                 ) : (
                   availableSlots.map((slot) => {
@@ -228,14 +241,6 @@ function DoctorDashboard() {
     setRescheduleAppointment(appointment);
   };
 
-  const { data: exchangeRate } = useQuery({
-    queryKey: ["exchangeRate"],
-    queryFn: async () => {
-      const { data, error } = await supabase.getExchangeRate();
-      if (error) throw error;
-      return data;
-    },
-  });
 
 
   // Ask for OS-level notification permission on dashboard load
@@ -287,122 +292,66 @@ function DoctorDashboard() {
     staleTime: 0,
   });
 
-  const patientById = new Map((appts ?? []).map((a) => [a.patient?._id || a.patient, a.patient]));
+  const patientById = new Map((Array.isArray(appts) ? appts : []).map((a) => [a.patient?._id || a.patient, a.patient]));
 
   const { data: notifications } = useQuery({
     queryKey: ["doctor-notifications"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("notifications")
-        .select("*")
-        .eq("is_read", false)
-        .order("created_at", { ascending: false })
-        .limit(10);
-      if (error) throw error;
-      return data;
+      const response = await fetch('/api/notifications', {
+        credentials: 'include',
+      });
+      const result = await response.json();
+      if (response.ok && result.data) {
+        return Array.isArray(result.data) ? result.data : [];
+      }
+      return [];
     },
   });
 
-  // Realtime: refresh + toast + OS notification on new notification
-  useEffect(() => {
-    const ch = supabase
-      .channel("doctor-realtime")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "notifications" },
-        (payload) => {
-          const n = payload.new as { title: string; message: string; is_urgent: boolean };
-          if (n.is_urgent) {
-            toast.error(`🚨 ${n.title}`, { duration: 8000 });
-            setUrgentAlert({
-              title: n.title,
-              message: n.message,
-              time: new Date().toLocaleString(undefined, {
-                month: "short",
-                day: "numeric",
-                hour: "numeric",
-                minute: "2-digit",
-              }),
-            });
-            try {
-              if (typeof window !== "undefined" && "AudioContext" in window) {
-                const ctx = new AudioContext();
-                const o = ctx.createOscillator();
-                const g = ctx.createGain();
-                o.type = "sine";
-                o.frequency.value = 880;
-                g.gain.value = 0.15;
-                o.connect(g).connect(ctx.destination);
-                o.start();
-                setTimeout(() => { o.stop(); ctx.close(); }, 350);
-              }
-            } catch { /* ignore */ }
-          } else toast(n.title);
-          showOsNotification(
-            n.is_urgent ? `🚨 ${n.title}` : n.title,
-            n.message,
-            n.is_urgent
-          );
-          qc.invalidateQueries({ queryKey: ["doctor-notifications"] });
-          qc.invalidateQueries({ queryKey: ["doctor-appointments"] });
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "appointments" },
-        () => qc.invalidateQueries({ queryKey: ["doctor-appointments"] })
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(ch);
-    };
-  }, [qc]);
-
   const markComplete = async (id: string) => {
-    const { error } = await supabase
-      .from("appointments")
-      .update({ status: "completed" })
-      .eq("id", id);
-    if (error) toast.error(error.message);
-    else {
+    const response = await fetch(`/api/appointments/${id}/complete`, {
+      method: 'PATCH',
+      credentials: 'include',
+    });
+    if (response.ok) {
       toast.success("Marked complete");
       qc.invalidateQueries({ queryKey: ["doctor-appointments"] });
+    } else {
+      toast.error("Failed to mark complete");
     }
   };
 
   const admitPatient = async (id: string) => {
-    const { error } = await supabase
-      .from("appointments")
-      .update({ doctorApproved: true })
-      .eq("id", id);
-    if (error) toast.error(error.message);
-    else {
-      toast.success("Patient admitted to session!");
+    const response = await fetch(`/api/appointments/${id}/admit`, {
+      method: 'PATCH',
+      credentials: 'include',
+    });
+    if (response.ok) {
+      toast.success("Patient admitted");
       qc.invalidateQueries({ queryKey: ["doctor-appointments"] });
+    } else {
+      toast.error("Failed to admit patient");
     }
   };
 
   const markRead = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from("notifications")
-        .update({ is_read: true })
-        .eq("id", id);
-      if (error) {
-        toast.error("Failed to mark notification as read");
-      } else {
-        toast.success("Notification marked as read");
+      const response = await fetch(`/api/notifications/${id}/read`, {
+        method: 'PATCH',
+        credentials: 'include',
+      });
+      if (response.ok) {
         qc.invalidateQueries({ queryKey: ["doctor-notifications"] });
       }
-    } catch (error) {
-      toast.error("Failed to mark notification as read");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to mark as read");
     }
   };
 
-  const urgent = (appts ?? []).filter(
+  const urgent = (Array.isArray(appts) ? appts : []).filter(
     (a) => a.type === "urgent" && (a.status === "scheduled" || a.status === "confirmed")
   );
-  const others = (appts ?? []).filter((a) => !urgent.includes(a));
+  const others = (Array.isArray(appts) ? appts : []).filter((a) => !urgent.includes(a));
 
   return (
     <>
@@ -609,15 +558,36 @@ function TodayScheduleCard() {
 
   const { data: userData } = useQuery({
     queryKey: ["me"],
-    queryFn: async () => (await supabase.auth.getUser()).data.user,
+    queryFn: async () => {
+      const userStr = localStorage.getItem('user');
+      if (!userStr) return null;
+      try {
+        const user = JSON.parse(userStr);
+        // Ensure _id is set from id if missing
+        if (user.id && !user._id) {
+          user._id = user.id;
+        }
+        return user;
+      } catch (e) {
+        console.error('Failed to parse user data', e);
+        return null;
+      }
+    },
   });
 
   const { data: capacity, isLoading } = useQuery({
-    queryKey: ["today-schedule-capacity", userData?.id],
-    enabled: !!userData?.id,
+    queryKey: ["today-schedule-capacity", userData?.id || userData?._id],
+    enabled: !!(userData?.id || userData?._id),
     queryFn: async () => {
-      const { data } = await supabase.getScheduleCapacity(userData!.id, [todayStr]);
-      return data?.[0] ?? null;
+      const userId = userData!.id || userData!._id;
+      const response = await fetch(`/api/doctors/${userId}/schedule/capacity?dates=${todayStr}`, {
+        credentials: 'include',
+      });
+      const result = await response.json();
+      if (response.ok && result.data) {
+        return result.data[0] || null;
+      }
+      return null;
     },
     refetchInterval: 30_000,
   });
@@ -631,7 +601,7 @@ function TodayScheduleCard() {
       </h2>
       {isLoading ? (
         <Loader2 className="mt-3 h-4 w-4 animate-spin text-muted-foreground" />
-      ) : blocks.length === 0 ? (
+      ) : !Array.isArray(blocks) || blocks.length === 0 ? (
         <p className="mt-2 text-xs text-muted-foreground">No schedule set for today.</p>
       ) : (
         <ul className="mt-3 grid gap-2">

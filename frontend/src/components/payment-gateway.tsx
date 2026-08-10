@@ -7,14 +7,17 @@ import { finalizeAppointmentPayment } from "@/lib/appointments.functions";
 import { Calendar, Clock, User, Activity, Stethoscope, CreditCard, CheckCircle2 } from "lucide-react";
 
 interface PaymentGatewayProps {
-  appointmentId: string;
+  paymentId: string;
   amount: number;
   currency?: string;
   onSuccess?: () => void;
-  appointment?: any;
+  payment?: any;
+  reservation?: any;
+  doctor?: any;
+  patient?: any;
 }
 
-export function PaymentGateway({ appointmentId, amount, currency, appointment }: PaymentGatewayProps) {
+export function PaymentGateway({ paymentId, amount, currency, payment, reservation, doctor, patient }: PaymentGatewayProps) {
   const navigate = useNavigate();
   const finalize = useServerFn(finalizeAppointmentPayment);
   const [cardNumber, setCardNumber] = useState("5399 0000 0000 0000");
@@ -29,8 +32,8 @@ export function PaymentGateway({ appointmentId, amount, currency, appointment }:
       // Simulate payment processing
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // Call backend to mark payment as completed using existing Supabase flow
-      const result = await finalize({ data: { paymentId: appointmentId } });
+      // Call backend to mark payment as completed
+      const result = await finalize({ data: { paymentId } });
       toast.success("Payment successful — the doctor has been notified.");
       navigate({ to: "/patient/appointments" });
       return result;
@@ -47,15 +50,13 @@ export function PaymentGateway({ appointmentId, amount, currency, appointment }:
         {/* Left side - Appointment details (Shopping cart style) */}
         <div className="bg-white rounded-xl shadow-sm p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <CreditCard className="h-5 w-5" />
-            </div>
+            <img src="/logo.jpeg" alt="Logo" className="h-14 w-14 object-contain" />
             <h2 className="text-lg text-gray-900">Order Summary</h2>
           </div>
-          
-          {appointment ? (
+
+          {payment ? (
             <div className="space-y-4">
-              {/* Service item */}
+              {/* Consultation Type */}
               <div className="border-b border-gray-100 pb-4">
                 <div className="flex gap-4">
                   <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-primary/5 text-primary">
@@ -63,13 +64,10 @@ export function PaymentGateway({ appointmentId, amount, currency, appointment }:
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-gray-900">
-                      {appointment.appointment_type === 'urgent' ? 'Urgent Consultation' : 'Medical Consultation'}
+                      {payment.metadata?.appointmentType === 'urgent' ? 'Urgent Consultation' : 'Medical Consultation'}
                     </h3>
                     <p className="text-sm text-gray-500 mt-1">
-                      {appointment.doctors?.full_name || 'Doctor'}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {appointment.doctors?.specialty || 'General Practitioner'}
+                      Doctor Consultation
                     </p>
                   </div>
                   <div className="text-right">
@@ -80,53 +78,50 @@ export function PaymentGateway({ appointmentId, amount, currency, appointment }:
                 </div>
               </div>
 
-              {/* Date & Time */}
+              {/* Reserved Time Slot */}
               <div className="flex items-center gap-3 py-3 border-b border-gray-100">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-600">
                   <Calendar className="h-4 w-4" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">Date & Time</p>
+                  <p className="text-sm font-medium text-gray-900">Reserved Time Slot</p>
                   <p className="text-sm text-gray-600">
-                    {appointment.scheduled_at 
-                      ? new Date(appointment.scheduled_at).toLocaleString('en-US', {
-                          weekday: 'short',
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
+                    {payment?.metadata?.scheduledAt
+                      ? new Date(payment.metadata.scheduledAt).toLocaleTimeString('en-US', {
                           hour: '2-digit',
-                          minute: '2-digit'
+                          minute: '2-digit',
+                          hour12: true
                         })
-                      : 'ASAP - Urgent Consultation'}
+                      : 'Pending'}
                   </p>
                 </div>
               </div>
 
-              {/* Symptoms */}
-              {appointment.symptoms && (
-                <div className="flex items-start gap-3 py-3 border-b border-gray-100">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-600 mt-0.5">
-                    <Activity className="h-4 w-4" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">Symptoms</p>
-                    <p className="text-sm text-gray-600 line-clamp-2">{appointment.symptoms}</p>
-                  </div>
+              {/* Doctor's Details */}
+              <div className="flex items-center gap-3 py-3 border-b border-gray-100">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-600">
+                  <User className="h-4 w-4" />
                 </div>
-              )}
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900">Doctor</p>
+                  <p className="text-sm text-gray-600">
+                    {doctor?.fullName || doctor?.firstName + ' ' + doctor?.lastName || 'Doctor Assigned'}
+                  </p>
+                </div>
+              </div>
 
-              {/* Contact Phone */}
-              {appointment.contact_phone && (
-                <div className="flex items-center gap-3 py-3 border-b border-gray-100">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-600">
-                    <User className="h-4 w-4" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">Contact Phone</p>
-                    <p className="text-sm text-gray-600">{appointment.contact_phone}</p>
-                  </div>
+              {/* Patient's Name */}
+              <div className="flex items-center gap-3 py-3 border-b border-gray-100">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-600">
+                  <User className="h-4 w-4" />
                 </div>
-              )}
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900">Patient</p>
+                  <p className="text-sm text-gray-600">
+                    {patient?.fullName || patient?.firstName + ' ' + patient?.lastName || 'Patient'}
+                  </p>
+                </div>
+              </div>
 
               {/* Order Summary */}
               <div className="mt-6 space-y-3 pt-4 border-t border-gray-200">

@@ -44,10 +44,13 @@ const paymentSchema = new mongoose.Schema(
       appointmentType: { type: String, enum: ['urgent', 'normal'] },
       doctorId: String,
       reservationId: String,
+      scheduledAt: String,
       severity: String,
       cholesterol: Number,
       sugar: Number,
       bloodPressure: String,
+      contactPhone: String,
+      bloodGroup: String,
     },
     paidAt: {
       type: Date,

@@ -2,7 +2,6 @@ import { type ReactNode, useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { LogOut, Bell, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import logo from "@/assets/logo.jpeg";
@@ -36,32 +35,34 @@ export function AppShell({
   const [notificationCount, setNotificationCount] = useState(0);
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (authUser) {
-        setUser(authUser);
-        
-        // Fetch notification count
-        const { count } = await supabase
-          .from("notifications")
-          .select("*", { count: 'exact', head: true });
-        setNotificationCount(count || 0);
+    // Load user from localStorage
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        const userData = JSON.parse(userStr);
+        setUser(userData);
+      } catch (e) {
+        console.error('Failed to parse user data from localStorage', e);
       }
-    };
-    
-    fetchUserData();
+    }
   }, []);
 
   // Get user initials from email or name
   const getUserInitials = () => {
     if (!user) return 'U';
-    const email = user.email;
-    if (email) {
-      const parts = email.split('@')[0].split('.');
+    if (user.fullName) {
+      const parts = user.fullName.split(' ');
       if (parts.length >= 2) {
         return (parts[0][0] + parts[1][0]).toUpperCase();
       }
-      return email.substring(0, 2).toUpperCase();
+      return user.fullName.substring(0, 2).toUpperCase();
+    }
+    if (user.email) {
+      const parts = user.email.split('@')[0].split('.');
+      if (parts.length >= 2) {
+        return (parts[0][0] + parts[1][0]).toUpperCase();
+      }
+      return user.email.substring(0, 2).toUpperCase();
     }
     return 'U';
   };
@@ -69,11 +70,8 @@ export function AppShell({
   // Get display name from user metadata or email
   const getDisplayName = () => {
     if (!user) return 'User';
-    if (user.user_metadata?.full_name) {
-      return user.user_metadata.full_name;
-    }
-    if (user.user_metadata?.name) {
-      return user.user_metadata.name;
+    if (user.fullName) {
+      return user.fullName;
     }
     if (user.email) {
       return user.email.split('@')[0];
@@ -84,7 +82,9 @@ export function AppShell({
   const handleSignOut = async () => {
     await qc.cancelQueries();
     qc.clear();
-    await supabase.auth.signOut();
+    localStorage.removeItem('user');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userRole');
     navigate({ to: "/", replace: true });
   };
 

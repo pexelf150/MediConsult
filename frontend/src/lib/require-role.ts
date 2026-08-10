@@ -1,10 +1,9 @@
 import { redirect } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
 
 export type AppRole = "patient" | "doctor";
 
 export async function requireRole(expectedRole: AppRole) {
-  // First check localStorage for backend auth
+  // Check localStorage for backend auth
   const userStr = localStorage.getItem('user');
   if (userStr) {
     try {
@@ -19,20 +18,7 @@ export async function requireRole(expectedRole: AppRole) {
       localStorage.removeItem('user');
     }
   }
-  
-  // Fallback to Supabase auth
-  const { data, error } = await supabase.auth.getUser();
 
-  if (error || !data.user) {
-    console.log('requireRole: No Supabase user found, redirecting to home');
-    throw redirect({ to: "/" });
-  }
-
-  const role = (data.user.user_metadata?.role as AppRole | undefined) ?? "patient";
-
-  if (role !== expectedRole) {
-    throw redirect({ to: role === "doctor" ? "/doctor" : "/patient" });
-  }
-
-  return { user: data.user, role };
+  console.log('requireRole: No user found in localStorage, redirecting to home');
+  throw redirect({ to: "/" });
 }

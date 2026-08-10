@@ -360,8 +360,17 @@ function PasswordChangeForm() {
 
     setLoading(true);
     try {
-      const { error } = await supabase.auth.changePassword(currentPassword, newPassword);
-      if (error) throw error;
+      const response = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          currentPassword,
+          newPassword,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || 'Failed to change password');
       toast.success("Password changed successfully!");
       setCurrentPassword("");
       setNewPassword("");

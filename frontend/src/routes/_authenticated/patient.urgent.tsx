@@ -1,9 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Activity, ArrowRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -22,15 +23,15 @@ function UrgentFlow() {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("phone")
-          .eq("id", user.id)
-          .single();
-        if (profile?.phone) {
-          setContactPhone(profile.phone);
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          if (user.phone) {
+            setContactPhone(user.phone);
+          }
+        } catch (e) {
+          console.error('Failed to parse user data', e);
         }
       }
     };
@@ -40,14 +41,15 @@ function UrgentFlow() {
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const { data: docs, error } = await supabase
-          .from("doctors")
-          .select("id, full_name, specialty, urgent_fee_cents")
-          .eq("is_available", true);
-        if (error) throw error;
-        setDoctors(docs || []);
-        if (docs && docs.length > 0) {
-          setSelectedDoctor(docs[0].id);
+        const response = await fetch('/api/doctors/available', {
+          credentials: 'include',
+        });
+        const result = await response.json();
+        if (response.ok && result.data) {
+          setDoctors(result.data);
+          if (result.data.length > 0) {
+            setSelectedDoctor(result.data[0]._id);
+          }
         }
       } catch (err) {
         console.error("Failed to fetch doctors:", err);
@@ -74,33 +76,32 @@ function UrgentFlow() {
     }
     setSubmitting(true);
     try {
-      const selectedDoc = doctors.find(d => d.id === selectedDoctor);
+      const selectedDoc = doctors.find(d => d._id === selectedDoctor);
       if (!selectedDoc) {
         toast.error("Selected doctor not found.");
         return;
       }
 
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error("Not signed in");
+      const userStr = localStorage.getItem('user');
+      if (!userStr) throw new Error("Not signed in");
+      const user = JSON.parse(userStr);
 
-      const { data: appt, error: insErr } = await supabase
-        .from("appointments")
-        .insert({
-          patient_id: user.user.id,
+      const response = await fetch('/api/appointments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
           doctor_id: selectedDoctor,
           appointment_type: "urgent",
-          status: "pending_payment",
-          payment_status: "unpaid",
           symptoms,
           contact_phone: contactPhone,
-          fee_cents: selectedDoc.urgent_fee_cents,
-          scheduled_at: new Date().toISOString(),
-        })
-        .select("id")
-        .single();
-      if (insErr) throw insErr;
+        }),
+      });
 
-      navigate({ to: "/patient/payment-new/$id", params: { id: appt.id } });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || 'Failed to create appointment');
+
+      navigate({ to: "/patient/payment-new/$id", params: { id: result.data._id } });
     } catch (err) {
       toast.error((err as Error).message);
     } finally {

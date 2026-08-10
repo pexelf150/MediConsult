@@ -41,10 +41,11 @@ export const updateFees = asyncHandler(async (req, res) => {
 
 export const getDashboard = asyncHandler(async (req, res) => {
   const Appointment = (await import('../models/Appointment.js')).default;
+  const Doctor = (await import('../models/Doctor.js')).default;
 
   const doctorId = req.user._id;
 
-  const [urgentCount, todayAppointments, upcomingAppointments, completedCount] = await Promise.all([
+  const [urgentCount, todayAppointments, upcomingAppointments, completedCount, doctor] = await Promise.all([
     Appointment.countDocuments({ doctor: doctorId, type: 'urgent', status: { $in: ['confirmed', 'in_progress'] } }),
     Appointment.find({
       doctor: doctorId,
@@ -66,6 +67,7 @@ export const getDashboard = asyncHandler(async (req, res) => {
       .sort({ scheduledAt: 1 })
       .limit(10),
     Appointment.countDocuments({ doctor: doctorId, status: 'completed' }),
+    Doctor.findById(doctorId).select('consultationFee urgentFee isAvailable'),
   ]);
 
   res.status(200).json(
@@ -77,6 +79,9 @@ export const getDashboard = asyncHandler(async (req, res) => {
       },
       todayAppointments,
       upcomingAppointments,
+      consultationFee: doctor?.consultationFee,
+      urgentFee: doctor?.urgentFee,
+      isAvailable: doctor?.isAvailable,
     })
   );
 });

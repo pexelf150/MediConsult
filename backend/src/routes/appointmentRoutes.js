@@ -56,6 +56,7 @@ router.post(
   [
     body('reservationId').isMongoId().withMessage('Invalid reservationId'),
     body('symptoms').trim().notEmpty().withMessage('Symptoms are required'),
+    body('contactPhone').trim().notEmpty().withMessage('Contact phone is required'),
   ],
   validate,
   appointmentController.confirmReservationAndBook

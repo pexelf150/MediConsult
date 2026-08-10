@@ -7,5 +7,7 @@ const router = Router();
 router.use(protect, restrictTo('patient'));
 
 router.get('/dashboard', patientController.getDashboard);
+router.get('/profile', patientController.getProfile);
+router.put('/profile', patientController.updateProfile);
 
 export default router;

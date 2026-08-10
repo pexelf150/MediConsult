@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,43 +43,55 @@ function DoctorSchedule() {
   const [savingFees, setSavingFees] = useState(false);
   const [feesLoaded, setFeesLoaded] = useState(false);
 
-  const { data: exchangeRate } = useQuery({
-    queryKey: ["exchangeRate"],
+  const { data: userData } = useQuery({
+    queryKey: ["me"],
     queryFn: async () => {
-      const { data, error } = await supabase.getExchangeRate();
-      if (error) throw error;
-      return data;
+      const userStr = localStorage.getItem('user');
+      if (!userStr) return null;
+      try {
+        const user = JSON.parse(userStr);
+        // Ensure _id is set from id if missing
+        if (user.id && !user._id) {
+          user._id = user.id;
+        }
+        return user;
+      } catch (e) {
+        console.error('Failed to parse user data', e);
+        return null;
+      }
     },
   });
 
-  const { data: userData } = useQuery({
-    queryKey: ["me"],
-    queryFn: async () => (await supabase.auth.getUser()).data.user,
-  });
-
   const { data: schedules, isLoading } = useQuery({
-    queryKey: ["my-schedule", userData?.id],
-    enabled: !!userData?.id,
+    queryKey: ["my-schedule", userData?.id || userData?._id],
+    enabled: !!(userData?.id || userData?._id),
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("doctor_schedules")
-        .select("*")
-        .eq("doctor_id", userData!.id)
-        .order("day_of_week", { ascending: true })
-        .order("start_time", { ascending: true });
-      if (error) throw error;
-      return data;
+      const response = await fetch('/api/doctors/portal/schedule', {
+        credentials: 'include',
+      });
+      const result = await response.json();
+      if (response.ok && result.data) {
+        return result.data.schedule || [];
+      }
+      return [];
     },
   });
 
   // Fetch today's appointment counts for this doctor
   const todayStr = new Date().toISOString().slice(0, 10);
   const { data: todayCapacity } = useQuery({
-    queryKey: ["today-capacity", userData?.id],
-    enabled: !!userData?.id,
+    queryKey: ["today-capacity", userData?.id || userData?._id],
+    enabled: !!(userData?.id || userData?._id),
     queryFn: async () => {
-      const { data } = await supabase.getScheduleCapacity(userData!.id, [todayStr]);
-      return data?.[0] ?? null;
+      const userId = userData!.id || userData!._id;
+      const response = await fetch(`/api/doctors/${userId}/schedule/capacity?dates=${todayStr}`, {
+        credentials: 'include',
+      });
+      const result = await response.json();
+      if (response.ok && result.data) {
+        return result.data[0] || null;
+      }
+      return null;
     },
     refetchInterval: 30_000,
   });
@@ -97,57 +108,92 @@ function DoctorSchedule() {
       return;
     }
     setSaving(true);
-    const { error } = await supabase.from("doctor_schedules").insert({
-      doctor_id: userData.id,
-      day_of_week: Number(day),
-      start_time: startTime,
-      end_time: endTime,
-      slot_minutes: Number(slotMinutes),
-      max_appointments: maxNum,
+    const response = await fetch('/api/doctors/portal/schedule', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        dayOfWeek: Number(day),
+        startTime: startTime,
+        endTime: endTime,
+        slotMinutes: Number(slotMinutes),
+        maxAppointments: maxNum,
+      }),
     });
     setSaving(false);
-    if (error) toast.error(error.message);
-    else {
+    if (response.ok) {
       toast.success("Schedule added");
-      qc.invalidateQueries({ queryKey: ["my-schedule", userData.id] });
+      const userId = userData.id || userData._id;
+      qc.invalidateQueries({ queryKey: ["my-schedule", userId] });
+    } else {
+      toast.error("Failed to add schedule");
     }
   };
 
   const removeSlot = async (id: string) => {
-    const { error } = await supabase.from("doctor_schedules").delete().eq("id", id);
-    if (error) toast.error(error.message);
-    else qc.invalidateQueries({ queryKey: ["my-schedule", userData?.id] });
+    const response = await fetch(`/api/doctors/portal/schedule/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    if (response.ok) {
+      const userId = userData?.id || userData?._id;
+      qc.invalidateQueries({ queryKey: ["my-schedule", userId] });
+    } else {
+      toast.error("Failed to remove schedule");
+    }
   };
 
   // Load doctor's fees
   useEffect(() => {
-    supabase.getDoctorProfile().then(({ data }: { data: any }) => {
-      if (data) {
-        setNormalFee(String(data.consultationFee ?? ""));
-        setUrgentFee(String(data.urgentFee ?? ""));
+    const loadFees = async () => {
+      const response = await fetch('/api/doctors/portal/dashboard', {
+        credentials: 'include',
+      });
+      const result = await response.json();
+      if (response.ok && result.data) {
+        setNormalFee(String(result.data.consultationFee ?? ""));
+        setUrgentFee(String(result.data.urgentFee ?? ""));
         setFeesLoaded(true);
       }
-    });
-  }, []);
+    };
+    loadFees();
+  }, [userData?.id || userData?._id]);
 
   // Save fees
   const handleSaveFees = async () => {
     if (!userData) return;
     setSavingFees(true);
-    const { error } = await supabase.updateDoctorFees({
-      consultationFee: parseFloat(normalFee),
-      urgentFee: parseFloat(urgentFee),
+    const response = await fetch('/api/doctors/portal/fees', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        consultationFee: parseFloat(normalFee),
+        urgentFee: parseFloat(urgentFee),
+      }),
     });
     setSavingFees(false);
-    if (error) {
-      toast.error("Failed to update fees: " + error.message);
+    if (response.ok) {
+      toast.success("Fees updated");
+      // Reload fees from dashboard
+      const loadFees = async () => {
+        const response = await fetch('/api/doctors/portal/dashboard', {
+          credentials: 'include',
+        });
+        const result = await response.json();
+        if (response.ok && result.data) {
+          setNormalFee(String(result.data.consultationFee ?? ""));
+          setUrgentFee(String(result.data.urgentFee ?? ""));
+        }
+      };
+      loadFees();
     } else {
-      toast.success("Consultation fees updated successfully.");
+      toast.error("Failed to update fees");
     }
   };
 
   const grouped = new Map<number, typeof schedules>();
-  (schedules ?? []).forEach((s) => {
+  (Array.isArray(schedules) ? schedules : []).forEach((s) => {
     const list = grouped.get(s.day_of_week) ?? [];
     list.push(s);
     grouped.set(s.day_of_week, list as typeof schedules);
@@ -155,9 +201,6 @@ function DoctorSchedule() {
 
   const todayDow = new Date().getDay();
   const todayBlocks = grouped.get(todayDow) ?? [];
-
-  const normalFeeUSD = exchangeRate && normalFee ? (parseFloat(normalFee) * exchangeRate.lkrToUsd).toFixed(2) : null;
-  const urgentFeeUSD = exchangeRate && urgentFee ? (parseFloat(urgentFee) * exchangeRate.lkrToUsd).toFixed(2) : null;
 
   return (
     <div className="grid gap-6">
@@ -285,9 +328,6 @@ function DoctorSchedule() {
               onChange={(e) => setNormalFee(e.target.value)}
               className="h-9 text-sm"
             />
-            {normalFeeUSD && (
-              <p className="text-[10px] text-muted-foreground">≈ ${normalFeeUSD} USD</p>
-            )}
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor="urgent-fee" className="text-xs font-medium">Urgent consultation (LKR)</Label>
@@ -301,9 +341,6 @@ function DoctorSchedule() {
               onChange={(e) => setUrgentFee(e.target.value)}
               className="h-9 text-sm"
             />
-            {urgentFeeUSD && (
-              <p className="text-[10px] text-muted-foreground">≈ ${urgentFeeUSD} USD</p>
-            )}
           </div>
         </div>
         <Button

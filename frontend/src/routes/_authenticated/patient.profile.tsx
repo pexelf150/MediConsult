@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,30 +24,57 @@ function PatientProfile() {
   const [age, setAge] = useState("");
 
   const { data: profile, isLoading: profileLoading } = useQuery({
-    queryKey: ["patient-profile", user?.id],
-    enabled: !!user?.id,
+    queryKey: ["patient-profile", user?._id || user?.id],
+    enabled: !!(user?._id || user?.id),
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user!.id)
-        .single();
-      if (error) throw error;
-      return data;
+      const userId = user?._id || user?.id;
+      console.log('Fetching patient profile, user ID:', userId);
+      console.log('User object:', user);
+      const response = await fetch(`/api/patients/profile`, {
+        credentials: 'include',
+      });
+      console.log('Response status:', response.status);
+      const result = await response.json();
+      console.log('Response data:', result);
+      if (response.ok && result.data) {
+        return result.data;
+      }
+      return null;
     },
   });
 
   useEffect(() => {
+    console.log('useEffect triggered with profile:', profile);
+    console.log('useEffect triggered with user:', user);
     if (profile) {
-      const parts = (profile.full_name || "").split(/\s+/);
-      setFirstName(parts[0] || "");
-      setLastName(parts.slice(1).join(" ") || "");
+      setFirstName(profile.firstName || "");
+      setLastName(profile.lastName || "");
       setPhone(profile.phone || "");
       setGender(profile.gender || "");
-      setDateOfBirth(profile.date_of_birth || "");
+      // Format date to yyyy-MM-dd for HTML date input
+      if (profile.dateOfBirth) {
+        const dob = new Date(profile.dateOfBirth);
+        setDateOfBirth(dob.toISOString().split('T')[0]);
+      } else {
+        setDateOfBirth("");
+      }
       setAge(profile.age ? String(profile.age) : "");
+    } else if (user) {
+      // Fallback to useAuth user data if profile API fails
+      setFirstName(user.firstName || "");
+      setLastName(user.lastName || "");
+      setPhone(user.phone || "");
+      setGender(user.gender || "");
+      // Format date to yyyy-MM-dd for HTML date input
+      if (user.dateOfBirth) {
+        const dob = new Date(user.dateOfBirth);
+        setDateOfBirth(dob.toISOString().split('T')[0]);
+      } else {
+        setDateOfBirth("");
+      }
+      setAge(user.age ? String(user.age) : "");
     }
-  }, [profile]);
+  }, [profile, user]);
 
   // Calculate age from date of birth
   const calculateAge = (dob: string) => {
@@ -88,23 +114,27 @@ function PatientProfile() {
         throw new Error("Please enter a valid date of birth.");
       }
 
-      const { data, error } = await supabase
-        .from("profiles")
-        .update({
-          full_name: `${firstName.trim()} ${lastName.trim()}`,
+      const response = await fetch(`/api/patients/profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
           phone: phone.trim(),
           gender,
-          date_of_birth: dateOfBirth,
+          dateOfBirth,
           age: ageNum,
-        })
-        .eq("id", user!.id);
+        }),
+      });
 
-      if (error) throw error;
-      return data;
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || 'Failed to update profile');
+      return result.data;
     },
     onSuccess: () => {
       toast.success("Profile updated successfully!");
-      qc.invalidateQueries({ queryKey: ["patient-profile", user?.id] });
+      qc.invalidateQueries({ queryKey: ["patient-profile", user?._id] });
     },
     onError: (err: any) => {
       toast.error(err.message || "Failed to update profile.");
@@ -143,7 +173,7 @@ function PatientProfile() {
               {initials || <User className="h-10 w-10 text-emerald-600" />}
             </div>
             <h2 className="mt-4 text-xl font-semibold text-foreground">
-              {profile?.full_name || "Patient Profile"}
+              {profile?.firstName && profile?.lastName ? `${profile.firstName} ${profile.lastName}` : "Patient Profile"}
             </h2>
             <p className="text-xs font-medium text-emerald-700 uppercase tracking-widest bg-emerald-50 rounded-full px-2.5 py-0.5 inline-block mt-2">
               Patient

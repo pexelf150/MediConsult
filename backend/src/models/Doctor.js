@@ -27,12 +27,12 @@ const doctorSchema = new mongoose.Schema({
   },
   consultationFee: {
     type: Number,
-    default: 2500,
+    default: 0,
     min: 0,
   },
   urgentFee: {
     type: Number,
-    default: 5000,
+    default: 0,
     min: 0,
   },
   bio: {

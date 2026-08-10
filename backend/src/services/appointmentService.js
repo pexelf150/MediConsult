@@ -99,7 +99,7 @@ export const initiateUrgentAppointment = async (patientId, { symptoms, severity 
   const Doctor = (await import('../models/Doctor.js')).default;
   const availableDoctors = await Doctor.find({ isAvailable: true });
   const urgentFee = availableDoctors.length > 0
-    ? Math.min(...availableDoctors.map(d => d.urgentFee || 5000))
+    ? Math.min(...availableDoctors.map(d => d.urgentFee || 0))
     : env.consultation.urgentFee;
 
   const payment = await Payment.create({
@@ -192,6 +192,8 @@ export const initiateNormalAppointmentPayment = async (patientId, { reservationI
   // Use getDoctorById so discriminator fields like consultationFee are available
   const doctor = await getDoctorById(reservation.doctor.toString());
 
+  console.log('Doctor consultation fee:', doctor.consultationFee);
+
   const stripe = getStripe();
 
   const payment = await Payment.create({
@@ -203,6 +205,8 @@ export const initiateNormalAppointmentPayment = async (patientId, { reservationI
       symptoms: symptoms.trim(),
       appointmentType: 'normal',
       reservationId: reservationId.toString(),
+      scheduledAt: reservation.scheduledAt.toISOString(),
+      doctorId: reservation.doctor.toString(),
       severity,
       cholesterol,
       sugar,

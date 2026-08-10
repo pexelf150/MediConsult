@@ -2,7 +2,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { supabase } from "@/integrations/supabase/client";
 import { finalizeAppointmentPayment } from "@/lib/appointments.functions";
 import { Button } from "@/components/ui/button";
 import { CreditCard, Lock, Loader2, ShieldCheck } from "lucide-react";
@@ -18,21 +17,15 @@ function PaymentPage() {
   const finalize = useServerFn(finalizeAppointmentPayment);
   const [paying, setPaying] = useState(false);
 
-  const { data: payment, isLoading } = useQuery({
-    queryKey: ["payment", id],
+  const { data: appointment, isLoading } = useQuery({
+    queryKey: ["appointment", id],
     queryFn: async () => {
-      const { data, error } = await supabase.getPayment(id);
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: exchangeRate } = useQuery({
-    queryKey: ["exchangeRate"],
-    queryFn: async () => {
-      const { data, error } = await supabase.getExchangeRate();
-      if (error) throw error;
-      return data;
+      const response = await fetch(`/api/appointments/${id}`, {
+        credentials: 'include',
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || 'Failed to fetch appointment');
+      return result.data;
     },
   });
 
@@ -50,7 +43,7 @@ function PaymentPage() {
     }
   };
 
-  if (isLoading || !payment) {
+  if (isLoading || !appointment) {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -58,10 +51,9 @@ function PaymentPage() {
     );
   }
 
-  const amountLKR = payment.amount / 100;
-  const amountUSD = exchangeRate ? (amountLKR * exchangeRate.lkrToUsd).toFixed(2) : null;
-  const appointmentType = payment.metadata?.appointmentType || 'normal';
-  const paymentStatus = payment.status;
+  const amountLKR = appointment.fee || 5000;
+  const appointmentType = appointment.appointment_type || 'normal';
+  const paymentStatus = appointment.payment_status || 'unpaid';
 
   return (
     <div className="mx-auto max-w-xl">
@@ -89,9 +81,6 @@ function PaymentPage() {
           <Row label="Amount due">
             <div className="flex flex-col items-end">
               <span className="text-lg font-semibold">Rs. {amountLKR.toFixed(2)}</span>
-              {amountUSD && (
-                <span className="text-sm text-muted-foreground">≈ ${amountUSD} USD</span>
-              )}
             </div>
           </Row>
           <Row label="Status">{paymentStatus}</Row>

@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import tailwindcss from "@tailwindcss/vite";
+import path from "path";
 
 const backendTarget =
   process.env.VITE_BACKEND_URL || "http://localhost:5001";
@@ -26,6 +27,12 @@ export default defineConfig({
 
   ssr: {
     noExternal: ["@tanstack/react-start"],
+  },
+
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
   },
 
   server: {

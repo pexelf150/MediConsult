@@ -117,10 +117,10 @@ export const releaseReservation = asyncHandler(async (req, res) => {
 });
 
 export const confirmReservationAndBook = asyncHandler(async (req, res) => {
-  const { reservationId, symptoms, severity, cholesterol, sugar, bloodPressure } = req.body;
+  const { reservationId, symptoms, severity, cholesterol, sugar, bloodPressure, contactPhone, bloodGroup } = req.body;
   const result = await appointmentService.initiateNormalAppointmentPayment(
     req.user._id,
-    { reservationId, symptoms, severity, cholesterol, sugar, bloodPressure }
+    { reservationId, symptoms, severity, cholesterol, sugar, bloodPressure, contactPhone, bloodGroup }
   );
 
   res.status(201).json(
