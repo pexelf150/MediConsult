@@ -41,14 +41,16 @@ function UrgentFlow() {
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const response = await fetch('/api/doctors/available', {
+        const response = await fetch('/api/doctors?available=true', {
           credentials: 'include',
         });
         const result = await response.json();
+        console.log('Doctors API response:', result);
         if (response.ok && result.data) {
-          setDoctors(result.data);
-          if (result.data.length > 0) {
-            setSelectedDoctor(result.data[0]._id);
+          const doctorsArray = Array.isArray(result.data) ? result.data : result.data.doctors || [];
+          setDoctors(doctorsArray);
+          if (doctorsArray.length > 0) {
+            setSelectedDoctor(doctorsArray[0]._id);
           }
         }
       } catch (err) {
@@ -86,22 +88,28 @@ function UrgentFlow() {
       if (!userStr) throw new Error("Not signed in");
       const user = JSON.parse(userStr);
 
-      const response = await fetch('/api/appointments', {
+      const response = await fetch('/api/appointments/urgent/initiate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          doctor_id: selectedDoctor,
-          appointment_type: "urgent",
+          doctorId: selectedDoctor,
           symptoms,
-          contact_phone: contactPhone,
+          contactPhone,
         }),
       });
 
       const result = await response.json();
+      console.log('Urgent appointment response:', result);
       if (!response.ok) throw new Error(result.message || 'Failed to create appointment');
 
-      navigate({ to: "/patient/payment-new/$id", params: { id: result.data._id } });
+      const paymentId = result.data.payment?._id;
+      console.log('Navigating to payment with ID:', paymentId);
+      if (paymentId) {
+        navigate({ to: "/patient/payment-new/$id", params: { id: paymentId } });
+      } else {
+        throw new Error('Payment ID not found in response');
+      }
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
@@ -145,20 +153,20 @@ function UrgentFlow() {
             <div className="mt-3 space-y-2">
               {doctors.map((doctor) => (
                 <div
-                  key={doctor.id}
+                  key={doctor._id}
                   className={`flex items-center justify-between rounded-lg border p-3 cursor-pointer transition-colors ${
-                    selectedDoctor === doctor.id
+                    selectedDoctor === doctor._id
                       ? "border-primary bg-primary/5"
                       : "border-border hover:border-primary/50"
                   }`}
-                  onClick={() => setSelectedDoctor(doctor.id)}
+                  onClick={() => setSelectedDoctor(doctor._id)}
                 >
                   <div className="flex-1">
-                    <div className="font-medium text-sm">{doctor.full_name}</div>
-                    <div className="text-xs text-muted-foreground">{doctor.specialty}</div>
+                    <div className="font-medium text-sm">{doctor.fullName}</div>
+                    <div className="text-xs text-muted-foreground">{doctor.specialization}</div>
                   </div>
                   <div className="text-sm font-semibold">
-                    Rs. {(doctor.urgent_fee_cents / 100).toFixed(2)}
+                    Rs. {doctor.urgentFee || 500}
                   </div>
                 </div>
               ))}

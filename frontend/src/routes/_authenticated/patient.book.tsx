@@ -144,8 +144,11 @@ function BookNormal() {
         credentials: 'include',
       });
       const result = await response.json();
+      console.log('Doctors API response:', result);
       if (response.ok && result.data) {
-        return result.data.doctors || result.data;
+        const doctorsArray = result.data.doctors || result.data;
+        console.log('Doctors array:', doctorsArray);
+        return doctorsArray;
       }
       return [];
     },

@@ -88,7 +88,7 @@ export const createNormalAppointment = async (patientId, appointmentData) => {
   return appointment;
 };
 
-export const initiateUrgentAppointment = async (patientId, { symptoms, severity = 'high', contactPhone }) => {
+export const initiateUrgentAppointment = async (patientId, { symptoms, severity = 'high', contactPhone, doctorId }) => {
   if (!symptoms?.trim()) {
     throw new ApiError(400, 'Symptoms are required for urgent consultation');
   }
@@ -111,6 +111,7 @@ export const initiateUrgentAppointment = async (patientId, { symptoms, severity 
       symptoms: symptoms.trim(),
       appointmentType: 'urgent',
       contactPhone,
+      doctorId,
     },
   });
 

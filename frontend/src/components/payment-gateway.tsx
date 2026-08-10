@@ -92,7 +92,7 @@ export function PaymentGateway({ paymentId, amount, currency, payment, reservati
                           minute: '2-digit',
                           hour12: true
                         })
-                      : 'Pending'}
+                      : payment?.metadata?.appointmentType === 'urgent' ? 'ASAP' : 'Pending'}
                   </p>
                 </div>
               </div>

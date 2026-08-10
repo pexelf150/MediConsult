@@ -23,7 +23,7 @@ export function AuthForm({ onSuccess, initialRole, onForgotPassword }: AuthFormP
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [specialty, setSpecialty] = useState("General Practitioner");
-  const [age, setAge] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
   const [gender, setGender] = useState("");
   const [phone, setPhone] = useState("");
   const [doctorCode, setDoctorCode] = useState("");
@@ -58,9 +58,8 @@ export function AuthForm({ onSuccess, initialRole, onForgotPassword }: AuthFormP
     try {
       if (mode === "signup") {
         if (role === "patient") {
-          const ageNum = Number(age);
-          if (!fullName.trim() || !phone.trim() || !gender || !Number.isFinite(ageNum) || ageNum < 1 || ageNum > 120) {
-            toast.error("Please fill in your full name, age, gender and contact number.");
+          if (!fullName.trim() || !phone.trim() || !gender || !dateOfBirth) {
+            toast.error("Please fill in your full name, date of birth, gender and contact number.");
             setSubmitting(false);
             return;
           }
@@ -79,7 +78,7 @@ export function AuthForm({ onSuccess, initialRole, onForgotPassword }: AuthFormP
               firstName,
               lastName,
               phone,
-              age: ageNum,
+              dateOfBirth,
               gender,
             }),
           });
@@ -97,7 +96,13 @@ export function AuthForm({ onSuccess, initialRole, onForgotPassword }: AuthFormP
             localStorage.setItem('userRole', result.data.user.role);
           }
 
-          toast.success("Account created — you're signed in.");
+          toast.success("Account created — please sign in with your credentials.");
+          setMode("signin");
+          setPassword("");
+          setFullName("");
+          setDateOfBirth("");
+          setGender("");
+          setPhone("");
         } else if (role === "doctor") {
           // Use backend API for doctor registration
           const nameParts = fullName.trim().split(' ');
@@ -131,7 +136,11 @@ export function AuthForm({ onSuccess, initialRole, onForgotPassword }: AuthFormP
             localStorage.setItem('userRole', result.data.user.role);
           }
 
-          toast.success("Account created — you're signed in.");
+          toast.success("Account created — please sign in with your credentials.");
+          setMode("signin");
+          setPassword("");
+          setFullName("");
+          setSpecialty("General Practitioner");
           if (onSuccess) onSuccess(role);
         }
       } else {
@@ -301,15 +310,20 @@ export function AuthForm({ onSuccess, initialRole, onForgotPassword }: AuthFormP
                 transition={{ delay: 0.15 }}
               >
                 <div className="grid grid-cols-2 gap-3">
-                  <PillInput
-                    id="age"
-                    type="number"
-                    placeholder="Age"
-                    value={age}
-                    onChange={setAge}
-                    icon={<Calendar className="h-4 w-4" />}
-                    required
-                  />
+                  <div className="relative">
+                    <Label htmlFor="dateOfBirth" className="sr-only">Date of Birth</Label>
+                    <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-emerald-600">
+                      <Calendar className="h-4 w-4" />
+                    </div>
+                    <Input
+                      id="dateOfBirth"
+                      type="date"
+                      value={dateOfBirth}
+                      onChange={(e) => setDateOfBirth(e.target.value)}
+                      required
+                      className="h-11 rounded-full border-0 bg-emerald-50 pl-11 pr-4 text-sm text-emerald-900 placeholder:text-emerald-700/50 focus-visible:ring-2 focus-visible:ring-emerald-500"
+                    />
+                  </div>
                   <div className="relative">
                     <Label htmlFor="gender" className="sr-only">Gender</Label>
                     <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-emerald-600">

@@ -17,14 +17,14 @@ function PaymentPage() {
   const finalize = useServerFn(finalizeAppointmentPayment);
   const [paying, setPaying] = useState(false);
 
-  const { data: appointment, isLoading } = useQuery({
-    queryKey: ["appointment", id],
+  const { data: payment, isLoading } = useQuery({
+    queryKey: ["payment", id],
     queryFn: async () => {
-      const response = await fetch(`/api/appointments/${id}`, {
+      const response = await fetch(`/api/payments/${id}`, {
         credentials: 'include',
       });
       const result = await response.json();
-      if (!response.ok) throw new Error(result.message || 'Failed to fetch appointment');
+      if (!response.ok) throw new Error(result.message || 'Failed to fetch payment');
       return result.data;
     },
   });
@@ -43,7 +43,7 @@ function PaymentPage() {
     }
   };
 
-  if (isLoading || !appointment) {
+  if (isLoading || !payment) {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -51,9 +51,9 @@ function PaymentPage() {
     );
   }
 
-  const amountLKR = appointment.fee || 5000;
-  const appointmentType = appointment.appointment_type || 'normal';
-  const paymentStatus = appointment.payment_status || 'unpaid';
+  const amountLKR = (payment?.amount || 0) / 100;
+  const appointmentType = payment?.metadata?.appointmentType || 'normal';
+  const paymentStatus = payment?.status || 'pending';
 
   return (
     <div className="mx-auto max-w-xl">

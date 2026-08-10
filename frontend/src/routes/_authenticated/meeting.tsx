@@ -324,7 +324,7 @@ function MeetingPage() {
       <div className="border-b bg-card p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/patient/appointments" })}>
+            <Button variant="ghost" size="sm" onClick={() => navigate({ to: isDoctor ? "/doctor" : "/patient/appointments" })}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div className="flex items-center gap-3">
@@ -379,6 +379,9 @@ function MeetingPage() {
                   <User className="w-full h-full stroke-white/85" strokeWidth={1.8} fill="none" />
                 </div>
                 <div className="flex-1">{appointment.patient ? `${appointment.patient.firstName} ${appointment.patient.lastName}` : "Unknown"}</div>
+                {appointment.patient?.age && (
+                  <div className="text-white/75 text-[12px]">{appointment.patient.age} yrs</div>
+                )}
               </div>
 
               <div className="flex items-center gap-[10px] py-[12px_0] border-b border-white/18 text-[13px]">
@@ -428,21 +431,58 @@ function MeetingPage() {
                   </div>
                   <div className="pl-[26px] space-y-1 text-[12px] text-white/75">
                     {appointment.healthMetrics.cholesterol?.value && (
-                      <div className="flex justify-between">
+                      <div className="flex justify-between items-center gap-2">
                         <span>Cholesterol:</span>
-                        <span className="font-medium">{appointment.healthMetrics.cholesterol.value} mg/dL</span>
+                        <div className="flex items-center gap-2">
+                          <Badge className={`text-[10px] px-1.5 py-0.5 text-white border-none ${
+                            appointment.healthMetrics.cholesterol.value >= 240 
+                              ? 'bg-red-500' 
+                              : appointment.healthMetrics.cholesterol.value >= 200 
+                                ? 'bg-yellow-500'
+                                : 'bg-green-500'
+                          }`}>
+                            {appointment.healthMetrics.cholesterol.value >= 240 ? 'High' : appointment.healthMetrics.cholesterol.value >= 200 ? 'Medium' : 'Low'}
+                          </Badge>
+                          <span className="font-medium">{appointment.healthMetrics.cholesterol.value} mg/dL</span>
+                        </div>
                       </div>
                     )}
                     {appointment.healthMetrics.sugar?.value && (
-                      <div className="flex justify-between">
+                      <div className="flex justify-between items-center gap-2">
                         <span>Blood Sugar:</span>
-                        <span className="font-medium">{appointment.healthMetrics.sugar.value} mg/dL</span>
+                        <div className="flex items-center gap-2">
+                          <Badge className={`text-[10px] px-1.5 py-0.5 text-white border-none ${
+                            appointment.healthMetrics.sugar.value >= 126 
+                              ? 'bg-red-500' 
+                              : appointment.healthMetrics.sugar.value >= 100 
+                                ? 'bg-yellow-500'
+                                : 'bg-green-500'
+                          }`}>
+                            {appointment.healthMetrics.sugar.value >= 126 ? 'High' : appointment.healthMetrics.sugar.value >= 100 ? 'Medium' : 'Low'}
+                          </Badge>
+                          <span className="font-medium">{appointment.healthMetrics.sugar.value} mg/dL</span>
+                        </div>
                       </div>
                     )}
                     {appointment.healthMetrics.bloodPressure?.value && (
-                      <div className="flex justify-between">
+                      <div className="flex justify-between items-center gap-2">
                         <span>Blood Pressure:</span>
-                        <span className="font-medium">{appointment.healthMetrics.bloodPressure.value}</span>
+                        <div className="flex items-center gap-2">
+                          <Badge className={`text-[10px] px-1.5 py-0.5 text-white border-none ${
+                            appointment.healthMetrics.bloodPressure.value.includes('140') || appointment.healthMetrics.bloodPressure.value.includes('90')
+                              ? 'bg-red-500' 
+                              : appointment.healthMetrics.bloodPressure.value.includes('130') || appointment.healthMetrics.bloodPressure.value.includes('80')
+                                ? 'bg-yellow-500'
+                                : 'bg-green-500'
+                          }`}>
+                            {appointment.healthMetrics.bloodPressure.value.includes('140') || appointment.healthMetrics.bloodPressure.value.includes('90') 
+                              ? 'High' 
+                              : appointment.healthMetrics.bloodPressure.value.includes('130') || appointment.healthMetrics.bloodPressure.value.includes('80')
+                                ? 'Medium' 
+                                : 'Low'}
+                          </Badge>
+                          <span className="font-medium">{appointment.healthMetrics.bloodPressure.value}</span>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -577,13 +617,13 @@ function MeetingPage() {
             </DialogTitle>
           </DialogHeader>
           <PrescriptionPadV2
-            hospitalName="Medi Consult"
+            hospitalName="Premedi Lanka"
             slogan="Your Health, Our Priority"
             addressLine1={doctorProfile?.address || "123 Healthcare Street"}
             addressLine2={doctorProfile?.city || "Medical District, City 12345"}
             phone={doctorProfile?.phone || "0123456789"}
-            email={doctorProfile?.email || "mediconsult@email.com"}
-            website="www.mediconsult.com"
+            email={doctorProfile?.email || "premedilanka@email.com"}
+            website="www.premedilanka.com"
             patientName={appointment.patient ? `${appointment.patient.firstName} ${appointment.patient.lastName}` : ""}
             patientAge={appointment.patient?.age?.toString() || ""}
             patientSex={appointment.patient?.gender || ""}
