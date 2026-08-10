@@ -135,7 +135,7 @@ function Landing() {
           <Link to="/" className="flex items-center gap-3">
             <img src={logo} alt="Premedi Lanka Logo" className="h-14 w-[84px] rounded-lg object-cover" />
             <div className="leading-tight">
-              <div className="text-xl font-semibold tracking-tight text-white">
+              <div className="text-xl tracking-tight text-white">
                 Premedi Lanka
               </div>
               <div className="text-[10px] uppercase tracking-[0.18em] text-white/70">
@@ -177,7 +177,7 @@ function Landing() {
 
               <motion.h1
                 variants={fadeUp}
-                className="mt-6 text-5xl font-bold leading-[1.05] tracking-tight md:text-6xl lg:text-7xl"
+                className="mt-6 text-5xl leading-[1.05] tracking-tight md:text-6xl lg:text-7xl"
               >
 
                 Online Doctor
