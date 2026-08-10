@@ -343,15 +343,17 @@ export function AuthForm({ onSuccess, initialRole, onForgotPassword }: AuthFormP
                     </select>
                   </div>
                 </div>
-                <PillInput
-                  id="phone"
-                  type="tel"
-                  placeholder="Contact number"
-                  value={phone}
-                  onChange={setPhone}
-                  icon={<Phone className="h-4 w-4" />}
-                  required
-                />
+                <div className="mt-3">
+                  <PillInput
+                    id="phone"
+                    type="tel"
+                    placeholder="Contact number"
+                    value={phone}
+                    onChange={setPhone}
+                    icon={<Phone className="h-4 w-4" />}
+                    required
+                  />
+                </div>
               </motion.div>
             )}
             {mode === "signup" && role === "doctor" && (
