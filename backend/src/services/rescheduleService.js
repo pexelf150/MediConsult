@@ -1,6 +1,8 @@
 import RescheduleRequest from '../models/RescheduleRequest.js';
 import Appointment from '../models/Appointment.js';
 import Notification from '../models/Notification.js';
+import User from '../models/User.js';
+import Patient from '../models/Patient.js';
 import ApiError from '../utils/ApiError.js';
 
 /**
@@ -92,12 +94,17 @@ export const getDoctorRescheduleRequests = async (doctorId) => {
  * Get reschedule requests for a patient
  */
 export const getPatientRescheduleRequests = async (patientId) => {
-  const requests = await RescheduleRequest.find({ patient: patientId })
-    .populate('appointment')
-    .populate('doctor', 'firstName lastName email')
-    .sort({ createdAt: -1 });
+  try {
+    const requests = await RescheduleRequest.find({ patient: patientId })
+      .populate('appointment')
+      .populate('doctor', 'firstName lastName email')
+      .sort({ createdAt: -1 });
 
-  return requests;
+    return requests || [];
+  } catch (error) {
+    console.error('Error fetching patient reschedule requests:', error);
+    return [];
+  }
 };
 
 /**

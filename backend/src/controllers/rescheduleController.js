@@ -31,7 +31,7 @@ export const getPatientRescheduleRequests = asyncHandler(async (req, res) => {
   const patientId = req.user._id;
   const requests = await rescheduleService.getPatientRescheduleRequests(patientId);
 
-  res.status(200).json(new ApiResponse(200, 'Reschedule requests retrieved', requests));
+  res.status(200).json(new ApiResponse(200, 'Reschedule requests retrieved', { requests }));
 });
 
 export const approveRescheduleRequest = asyncHandler(async (req, res) => {
