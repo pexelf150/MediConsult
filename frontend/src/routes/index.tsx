@@ -301,52 +301,47 @@ function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-white/10 bg-[oklch(0.12_0.02_220)] text-white/60">
-        <div className="mx-auto max-w-6xl px-6 py-12">
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
-            <div className="flex flex-col gap-3">
-              <Link to="/" className="flex items-center gap-2">
-                <img src={logo} alt="Premedi Lanka Logo" className="h-10 w-[60px] rounded-lg object-cover" />
-                <span className="text-base font-semibold tracking-tight text-white">Premedi Lanka</span>
+      <footer className="relative z-10 border-t border-white/10 bg-[oklch(0.12_0.02_220)] text-white">
+        <div className="mx-auto max-w-[1200px] px-[60px] py-12">
+          <div className="flex flex-wrap justify-between gap-10">
+            <div className="flex-1 min-w-[320px] max-w-[420px]">
+              <Link to="/" className="flex items-center gap-3 mb-5">
+                <img src={logo} alt="Premedi Lanka Logo" className="h-10 w-[70px] rounded-lg object-cover" />
+                <span className="text-[22px]  tracking-wide text-white">Premedi Lanka</span>
               </Link>
-              <p className="text-xs text-white/50 leading-relaxed mt-2">
-                Secure and convenient telehealth services bringing certified medical care directly to your screen.
+              <p className="text-sm text-white/80 mb-3.5 leading-relaxed">
+                {doctorPhone}
+              </p>
+              <p className="text-sm text-white/80 mb-3.5 leading-relaxed">
+                {doctorEmail}
+              </p>
+              <p className="text-sm text-white/80 mb-3.5 leading-relaxed">
+                Operating Hours: 24/7
+              </p>
+              <p className="text-sm text-white/80 leading-relaxed">
+                {doctorAddress}
               </p>
             </div>
-            <div>
-              <h3 className="text-sm font-semibold text-white mb-3">Services</h3>
-              <ul className="space-y-2 text-xs">
-                <li><a href="#" className="hover:text-white transition-colors">Urgent Care</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Mental Health</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Primary Care</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Specialty Consults</a></li>
+            <div className="flex-0 min-w-[180px]">
+              <h4 className="text-base font-bold text-white mb-[18px]">Other</h4>
+              <ul className="space-y-3.5 text-sm">
+                <li><a href="#" className="text-white/80 hover:text-white transition-colors">Terms and Conditions</a></li>
+                <li><a href="#" className="text-white/80 hover:text-white transition-colors">FAQ</a></li>
+                <li><a href="#" className="text-white/80 hover:text-white transition-colors">Feedback</a></li>
+                <li><a href="#" className="text-white/80 hover:text-white transition-colors">Privacy Policy</a></li>
               </ul>
             </div>
-            <div>
-              <h3 className="text-sm font-semibold text-white mb-3">Legal</h3>
-              <ul className="space-y-2 text-xs">
-                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">HIPAA Compliance</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Consent to Treat</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-white mb-3">Contact</h3>
-              <ul className="space-y-2 text-xs text-white/50">
-                <li className="flex items-center gap-2">
-                  <Phone className="h-3.5 w-3.5 text-white/70" /> {doctorPhone}
-                </li>
-                <li className="flex items-center gap-2">
-                  <Mail className="h-3.5 w-3.5 text-white/70" /> {doctorEmail}
-                </li>
-                <li className="leading-relaxed">
-                  {doctorAddress}
-                </li>
+            <div className="flex-0 min-w-[180px]">
+              <h4 className="text-base font-bold text-white mb-[18px]">About</h4>
+              <ul className="space-y-3.5 text-sm">
+                <li><a href="#" className="text-white/80 hover:text-white transition-colors">The Company</a></li>
+                <li><a href="#" className="text-white/80 hover:text-white transition-colors">Services</a></li>
+                <li><a href="#" className="text-white/80 hover:text-white transition-colors">Partners</a></li>
+                <li><a href="#" className="text-white/80 hover:text-white transition-colors">Careers</a></li>
               </ul>
             </div>
           </div>
-          <div className="mt-12 border-t border-white/5 pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-white/40">
+          <div className="mt-12 border-t border-white/10 pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-white/60">
             <span>© {new Date().getFullYear()} Premedi Lanka. All rights reserved.</span>
             <div className="flex gap-4">
               <a href="#" className="hover:text-white transition-colors">Twitter</a>

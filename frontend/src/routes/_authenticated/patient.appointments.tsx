@@ -332,13 +332,13 @@ function PatientAppointments() {
             <div className="space-y-4">
               <div ref={prescriptionRef}>
                 <PrescriptionPadV2
-                  hospitalName="Medi Consult"
+                  hospitalName="Premedi Lanka"
                   slogan="Your Health, Our Priority"
-                  addressLine1="123 Healthcare Street"
-                  addressLine2="Medical District, City 12345"
-                  phone="0123456789"
-                  email="mediconsult@email.com"
-                  website="www.mediconsult.com"
+                  addressLine1={previewPrescription.doctor?.address || "123 Healthcare Street"}
+                  addressLine2={previewPrescription.doctor?.city || "Medical District, City 12345"}
+                  phone={previewPrescription.doctor?.phone || "0123456789"}
+                  email={previewPrescription.doctor?.contactEmail || previewPrescription.doctor?.email || "premedilanka@email.com"}
+                  website="www.premedilanka.com"
                   patientName={previewPrescription.patient ? `${previewPrescription.patient.firstName} ${previewPrescription.patient.lastName}` : ""}
                   patientAge={previewPrescription.patient?.age?.toString() || ""}
                   patientSex={previewPrescription.patient?.gender || ""}

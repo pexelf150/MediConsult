@@ -82,7 +82,7 @@ export const createNormalAppointment = async (patientId, appointmentData) => {
 
   await appointment.populate([
     { path: 'patient', select: 'firstName lastName email phone' },
-    { path: 'doctor', select: 'firstName lastName specialization' },
+    { path: 'doctor', select: 'firstName lastName specialization address contactEmail phone' },
   ]);
 
   return appointment;
@@ -305,7 +305,7 @@ export const finalizePayment = async (appointmentId, patientId, paymentData) => 
   // Populate appointment with doctor and patient details
   await appointment.populate([
     { path: 'patient', select: 'firstName lastName email phone' },
-    { path: 'doctor', select: 'firstName lastName specialization phone' },
+    { path: 'doctor', select: 'firstName lastName specialization address contactEmail phone' },
   ]);
 
   return appointment;
@@ -315,7 +315,7 @@ export const completeAppointmentAfterPayment = async (payment, io) => {
   if (payment.status === 'completed' && payment.appointment) {
     const existing = await Appointment.findById(payment.appointment).populate([
       { path: 'patient', select: 'firstName lastName email phone' },
-      { path: 'doctor', select: 'firstName lastName specialization phone' },
+      { path: 'doctor', select: 'firstName lastName specialization address contactEmail phone' },
     ]);
     return existing;
   }
@@ -361,7 +361,7 @@ export const completeAppointmentAfterPayment = async (payment, io) => {
 
     await appointment.populate([
       { path: 'patient', select: 'firstName lastName email phone' },
-      { path: 'doctor', select: 'firstName lastName specialization phone' },
+      { path: 'doctor', select: 'firstName lastName specialization address contactEmail phone' },
     ]);
 
     await notifyDoctorUrgentAppointment(io, doctor, appointment, patient);
@@ -441,7 +441,7 @@ export const completeAppointmentAfterPayment = async (payment, io) => {
 
     await appointment.populate([
       { path: 'patient', select: 'firstName lastName email phone' },
-      { path: 'doctor', select: 'firstName lastName specialization phone' },
+      { path: 'doctor', select: 'firstName lastName specialization address contactEmail phone' },
     ]);
 
     await notifyPatientAppointmentConfirmed(io, patient, appointment, doctor);
@@ -470,7 +470,7 @@ export const getAppointmentsForUser = async (userId, role, { status, type, page 
   const [appointments, total] = await Promise.all([
     Appointment.find(query)
       .populate('patient', 'firstName lastName email phone dateOfBirth gender')
-      .populate('doctor', 'firstName lastName specialization')
+      .populate('doctor', 'firstName lastName specialization address contactEmail phone')
       .sort({ scheduledAt: 1 })
       .skip(skip)
       .limit(limit),
@@ -486,7 +486,7 @@ export const getAppointmentsForUser = async (userId, role, { status, type, page 
 export const getAppointmentById = async (appointmentId, userId, role) => {
   const appointment = await Appointment.findById(appointmentId)
     .populate('patient', 'firstName lastName email phone dateOfBirth gender')
-    .populate('doctor', 'firstName lastName specialization licenseNumber phone')
+    .populate('doctor', 'firstName lastName specialization licenseNumber address contactEmail phone')
     .populate('payment');
 
   if (!appointment) {
@@ -547,7 +547,7 @@ export const updateAppointmentStatus = async (appointmentId, doctorId, status, u
 
   return appointment.populate([
     { path: 'patient', select: 'firstName lastName email phone' },
-    { path: 'doctor', select: 'firstName lastName specialization' },
+    { path: 'doctor', select: 'firstName lastName specialization address contactEmail phone' },
   ]);
 };
 
@@ -644,7 +644,7 @@ export const rescheduleAppointment = async (appointmentId, userId, role, newSche
 
   return appointment.populate([
     { path: 'patient', select: 'firstName lastName email phone' },
-    { path: 'doctor', select: 'firstName lastName specialization' },
+    { path: 'doctor', select: 'firstName lastName specialization address contactEmail phone' },
   ]);
 };
 

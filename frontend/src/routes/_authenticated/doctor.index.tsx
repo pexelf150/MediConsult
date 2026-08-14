@@ -30,37 +30,14 @@ function RescheduleModal({
   const [loading, setLoading] = useState(false);
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [bookedSlots, setBookedSlots] = useState<string[]>([]);
-  const [selectedDoctor, setSelectedDoctor] = useState("");
-  const [doctors, setDoctors] = useState<any[]>([]);
-  const [loadingDoctors, setLoadingDoctors] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [removingNotification, setRemovingNotification] = useState<string | null>(null);
-
-  const { data: userData } = useQuery({
-    queryKey: ["me"],
-    queryFn: async () => {
-      const userStr = localStorage.getItem('user');
-      if (!userStr) return null;
-      try {
-        const user = JSON.parse(userStr);
-        // Ensure _id is set from id if missing
-        if (user.id && !user._id) {
-          user._id = user.id;
-        }
-        return user;
-      } catch (e) {
-        console.error('Failed to parse user data', e);
-        return null;
-      }
-    },
-  });
 
   // Fetch available slots when date is selected
   const { data: slotStatus } = useQuery({
-    queryKey: ["slot-status", userData?.id, selectedDate],
-    enabled: !!userData?.id && !!selectedDate,
+    queryKey: ["slot-status", appointment?.doctor?._id || appointment?.doctor, selectedDate],
+    enabled: !!appointment?.doctor && !!selectedDate,
     queryFn: async () => {
-      const response = await fetch(apiUrl(`/appointments/slot-status/${userData?.id}?date=${selectedDate}`), {
+      const doctorId = appointment?.doctor?._id || appointment?.doctor;
+      const response = await fetch(apiUrl(`/appointments/slot-status/${doctorId}?date=${selectedDate}`), {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch slot status');
@@ -230,6 +207,25 @@ function DoctorDashboard() {
   const [rescheduleAppointment, setRescheduleAppointment] = useState<any>(null);
   const [dateOffset, setDateOffset] = useState(0); // 0 = today, -1 = yesterday, +1 = tomorrow
 
+  const { data: userData } = useQuery({
+    queryKey: ["me"],
+    queryFn: async () => {
+      const userStr = localStorage.getItem('user');
+      if (!userStr) return null;
+      try {
+        const user = JSON.parse(userStr);
+        // Ensure _id is set from id if missing
+        if (user.id && !user._id) {
+          user._id = user.id;
+        }
+        return user;
+      } catch (e) {
+        console.error('Failed to parse user data', e);
+        return null;
+      }
+    },
+  });
+
   const handlePreviewPrescription = (appointment: any) => {
     if (!appointment.prescription || !appointment.prescription.medications) {
       return;
@@ -297,19 +293,19 @@ function DoctorDashboard() {
   const { data: notifications } = useQuery({
     queryKey: ["doctor-notifications"],
     queryFn: async () => {
-      const response = await fetch('/api/notifications', {
+      const response = await fetch(apiUrl('/notifications'), {
         credentials: 'include',
       });
       const result = await response.json();
       if (response.ok && result.data) {
-        return Array.isArray(result.data) ? result.data : [];
+        return Array.isArray(result.data.notifications) ? result.data.notifications : [];
       }
       return [];
     },
   });
 
   const markComplete = async (id: string) => {
-    const response = await fetch(`/api/appointments/${id}/complete`, {
+    const response = await fetch(apiUrl(`/appointments/${id}/complete`), {
       method: 'PATCH',
       credentials: 'include',
     });
@@ -322,7 +318,7 @@ function DoctorDashboard() {
   };
 
   const admitPatient = async (id: string) => {
-    const response = await fetch(`/api/appointments/${id}/admit`, {
+    const response = await fetch(apiUrl(`/appointments/${id}/admit`), {
       method: 'PATCH',
       credentials: 'include',
     });
@@ -336,12 +332,15 @@ function DoctorDashboard() {
 
   const markRead = async (id: string) => {
     try {
-      const response = await fetch(`/api/notifications/${id}/read`, {
+      const response = await fetch(apiUrl(`/notifications/${id}/read`), {
         method: 'PATCH',
         credentials: 'include',
       });
       if (response.ok) {
         qc.invalidateQueries({ queryKey: ["doctor-notifications"] });
+      } else {
+        const error = await response.json();
+        toast.error(error.message || "Failed to mark as read");
       }
     } catch (err: any) {
       toast.error(err.message || "Failed to mark as read");
@@ -476,13 +475,13 @@ function DoctorDashboard() {
             </DialogHeader>
             {previewPrescription && (
               <PrescriptionPadV2
-                hospitalName="Medi Consult"
+                hospitalName="Premedi Lanka"
                 slogan="Your Health, Our Priority"
-                addressLine1="123 Healthcare Street"
-                addressLine2="Medical District, City 12345"
-                phone="0123456789"
-                email="mediconsult@email.com"
-                website="www.mediconsult.com"
+                addressLine1={userData?.address || "123 Healthcare Street"}
+                addressLine2={userData?.city || "Medical District, City 12345"}
+                phone={userData?.phone || "0123456789"}
+                email={userData?.contactEmail || userData?.email || "premedilanka@email.com"}
+                website="www.premedilanka.com"
                 patientName={previewPrescription.patient ? `${previewPrescription.patient.firstName} ${previewPrescription.patient.lastName}` : ""}
                 patientAge={previewPrescription.patient?.age?.toString() || ""}
                 patientSex={previewPrescription.patient?.gender || ""}
@@ -513,7 +512,7 @@ function DoctorDashboard() {
                 <AnimatePresence>
                   {notifications.map((n) => (
                     <motion.li
-                      key={n.id}
+                      key={n._id}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: 100, transition: { duration: 0.3 } }}
@@ -529,12 +528,12 @@ function DoctorDashboard() {
                           <div className="font-medium">{n.title}</div>
                           <div className="text-xs text-muted-foreground">{n.message}</div>
                           <div className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-                            {new Date(n.created_at).toLocaleString()}
+                            {new Date(n.createdAt).toLocaleString()}
                           </div>
                         </div>
                         <button
                           className="text-xs text-primary hover:underline"
-                          onClick={() => markRead(n.id)}
+                          onClick={() => markRead(n._id)}
                         >
                           Mark read
                         </button>
@@ -580,7 +579,7 @@ function TodayScheduleCard() {
     enabled: !!(userData?.id || userData?._id),
     queryFn: async () => {
       const userId = userData!.id || userData!._id;
-      const response = await fetch(`/api/doctors/${userId}/schedule/capacity?dates=${todayStr}`, {
+      const response = await fetch(apiUrl(`/doctors/${userId}/schedule/capacity?dates=${todayStr}`), {
         credentials: 'include',
       });
       const result = await response.json();
@@ -698,6 +697,9 @@ function AppointmentCard({
       meetingUrl: string | null;
     };
     doctorApproved: boolean;
+    isRescheduled?: boolean;
+    rescheduleHistory?: Array<{ originalScheduledAt: string }>;
+    bloodGroup?: string;
     healthMetrics?: {
       cholesterol?: { value: number | null; level: string | null };
       sugar?: { value: number | null; level: string | null };

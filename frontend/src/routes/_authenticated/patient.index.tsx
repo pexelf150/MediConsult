@@ -1,13 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Activity, CalendarClock, Video, AlertCircle, Loader2 } from "lucide-react";
+import { Video, AlertCircle, Loader2, CalendarClock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiUrl } from "@/lib/api-config";
 import { toast } from "sonner";
+import urgentIcon from "@/assets/Urgent.png";
+import normalIcon from "@/assets/Normal.png";
 
 export const Route = createFileRoute("/_authenticated/patient/")({
   component: PatientHome,
@@ -67,36 +69,32 @@ function PatientHome() {
       <section className="grid gap-4 md:grid-cols-2">
         <Link
           to="/patient/urgent"
-          className="group rounded-2xl border-2 border-urgent/40 bg-card p-6 shadow-soft transition hover:border-urgent hover:shadow-lift"
+          className="group rounded-2xl border-2 border-green-500/40 bg-card p-6 shadow-soft transition hover:border-green-500 hover:shadow-lift"
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-urgent text-urgent-foreground">
-              <Activity className="h-5 w-5" />
-            </div>
+            <img src={urgentIcon} alt="Urgent consultation" className="h-11 w-11 rounded-xl object-cover" />
             <h2 className="text-xl font-semibold">Urgent consultation</h2>
           </div>
           <p className="mt-3 text-sm text-muted-foreground">
             Describe your symptoms, pay securely, and connect with the next available doctor.
           </p>
-          <span className="mt-4 inline-block text-sm font-medium text-urgent group-hover:underline">
+          <span className="mt-4 inline-block text-sm font-medium text-green-500 group-hover:underline">
             Start now →
           </span>
         </Link>
 
         <Link
           to="/patient/book"
-          className="group rounded-2xl border bg-card p-6 shadow-soft transition hover:border-primary hover:shadow-lift"
+          className="group rounded-2xl border border-blue-500/40 bg-card p-6 shadow-soft transition hover:border-blue-500 hover:shadow-lift"
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <CalendarClock className="h-5 w-5" />
-            </div>
+            <img src={normalIcon} alt="Normal consultation" className="h-11 w-11 rounded-xl object-cover" />
             <h2 className="text-xl font-semibold">Schedule a normal visit</h2>
           </div>
           <p className="mt-3 text-sm text-muted-foreground">
             Browse our doctors and pick a date and time that works for you.
           </p>
-          <span className="mt-4 inline-block text-sm font-medium text-primary group-hover:underline">
+          <span className="mt-4 inline-block text-sm font-medium text-blue-500 group-hover:underline">
             Find a doctor →
           </span>
         </Link>

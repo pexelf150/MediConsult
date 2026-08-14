@@ -15,7 +15,22 @@ app.set('trust proxy', 1);
 
 app.use(
   cors({
-    origin: env.clientOrigins?.length ? env.clientOrigins : env.clientUrl,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, etc.)
+      if (!origin) return callback(null, true);
+      
+      // Check if origin is in the allowed list
+      if (env.clientOrigins?.length && env.clientOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      
+      // Allow localhost for development
+      if (env.isDevLocalOrigin(origin)) {
+        return callback(null, true);
+      }
+      
+      callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
   })
 );
