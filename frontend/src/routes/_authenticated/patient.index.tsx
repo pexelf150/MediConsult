@@ -41,7 +41,7 @@ function PatientHome() {
       });
       if (!response.ok) throw new Error('Failed to fetch reschedule requests');
       const result = await response.json();
-      return result.data;
+      return result.data.requests || [];
     },
   });
 
