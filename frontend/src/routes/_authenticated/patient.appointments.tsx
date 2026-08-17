@@ -24,46 +24,63 @@ function PatientAppointments() {
   const [selectedDate, setSelectedDate] = useState<string>("");
   const prescriptionRef = useRef<HTMLDivElement>(null);
 
-  const handlePreviewPrescription = (appointment: any) => {
+  const handlePreviewPrescription = async (appointment: any) => {
     if (!appointment.prescription || !appointment.prescription.medications) {
       return;
     }
-    setPreviewPrescription(appointment);
+    
+    // Fetch patient profile to get dateOfBirth for age calculation
+    let patientWithAge = appointment.patient;
+    if (appointment.patient && !appointment.patient.age && appointment.patient._id) {
+      try {
+        const response = await fetch(apiUrl('/patients/profile'), {
+          credentials: 'include',
+        });
+        if (response.ok) {
+          const result = await response.json();
+          if (result.data && result.data.dateOfBirth) {
+            const birthDate = new Date(result.data.dateOfBirth);
+            const today = new Date();
+            const age = today.getFullYear() - birthDate.getFullYear() - 
+              (today.getMonth() < birthDate.getMonth() || 
+               (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate()) ? 1 : 0);
+            patientWithAge = { ...appointment.patient, age };
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch patient profile:', error);
+      }
+    }
+    
+    setPreviewPrescription({ ...appointment, patient: patientWithAge });
   };
 
   const handleRescheduleAppointment = (appointment: any) => {
     setRescheduleAppointment(appointment);
   };
 
-  const handleDownloadPrescription = () => {
+  const handleDownloadPrescription = async () => {
     if (!previewPrescription || !prescriptionRef.current) return;
     
-    // Use browser's print functionality which preserves all styling
-    const printContent = prescriptionRef.current.innerHTML;
-    const printWindow = window.open('', '', 'width=800,height=600');
-    
-    if (printWindow) {
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Prescription</title>
-          <style>
-            body { margin: 0; padding: 20px; }
-            @media print {
-              body { margin: 0; }
-            }
-          </style>
-        </head>
-        <body>
-          ${printContent}
-        </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.focus();
-      printWindow.print();
-      printWindow.close();
+    try {
+      const canvas = await html2canvas(prescriptionRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      
+      const imgWidth = 190; // A4 width in mm minus margins
+      const pageHeight = 297; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+      pdf.save(`prescription-${previewPrescription.patient?.firstName}-${new Date(previewPrescription.scheduledAt).toLocaleDateString()}.pdf`);
+    } catch (error) {
+      console.error('Failed to generate PDF:', error);
+      toast.error('Failed to download prescription');
     }
   };
 

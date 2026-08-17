@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Activity, ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import urgentIcon from "@/assets/Urgent.png";
 
 export const Route = createFileRoute("/_authenticated/patient/urgent")({
   component: UrgentFlow,
@@ -121,7 +122,7 @@ function UrgentFlow() {
     <div className="mx-auto max-w-5xl">
       <div className="mb-6 flex items-center gap-3">
         <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-urgent text-urgent-foreground">
-          <Activity className="h-5 w-5" />
+          <img src={urgentIcon} alt="Urgent" className="h-6 w-6" />
         </div>
         <div>
           <h1 className="text-2xl tracking-tight">Urgent consultation</h1>
