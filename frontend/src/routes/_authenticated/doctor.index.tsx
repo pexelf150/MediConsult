@@ -293,7 +293,7 @@ function DoctorDashboard() {
   const { data: notifications } = useQuery({
     queryKey: ["doctor-notifications"],
     queryFn: async () => {
-      const response = await fetch(apiUrl('/notifications'), {
+      const response = await fetch(apiUrl('/notifications?unreadOnly=true'), {
         credentials: 'include',
       });
       const result = await response.json();
@@ -332,17 +332,22 @@ function DoctorDashboard() {
 
   const markRead = async (id: string) => {
     try {
+      console.log('Marking notification as read:', id);
       const response = await fetch(apiUrl(`/notifications/${id}/read`), {
         method: 'PATCH',
         credentials: 'include',
       });
+      console.log('Mark read response status:', response.status);
       if (response.ok) {
+        toast.success("Marked as read");
         qc.invalidateQueries({ queryKey: ["doctor-notifications"] });
       } else {
         const error = await response.json();
+        console.error('Mark read error:', error);
         toast.error(error.message || "Failed to mark as read");
       }
     } catch (err: any) {
+      console.error('Mark read catch error:', err);
       toast.error(err.message || "Failed to mark as read");
     }
   };
@@ -583,8 +588,11 @@ function TodayScheduleCard() {
         credentials: 'include',
       });
       const result = await response.json();
-      if (response.ok && result.data) {
-        return result.data[0] || null;
+      console.log('Schedule capacity response:', result);
+      if (response.ok && result.data && result.data.capacity) {
+        const capacityData = result.data.capacity[0] || null;
+        console.log('Extracted capacity data:', capacityData);
+        return capacityData;
       }
       return null;
     },

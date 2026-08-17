@@ -88,8 +88,11 @@ function DoctorSchedule() {
         credentials: 'include',
       });
       const result = await response.json();
-      if (response.ok && result.data) {
-        return result.data[0] || null;
+      console.log('Schedule page capacity response:', result);
+      if (response.ok && result.data && result.data.capacity) {
+        const capacityData = result.data.capacity[0] || null;
+        console.log('Schedule page extracted capacity:', capacityData);
+        return capacityData;
       }
       return null;
     },
@@ -221,7 +224,11 @@ function DoctorSchedule() {
           <div className="grid gap-2 sm:grid-cols-2">
             {todayBlocks.map((block) => {
               const max = block.max_appointments ?? 10;
-              const active = todayCapacity?.active ?? 0;
+              // Find matching block in capacity data by time
+              const capacityBlock = todayCapacity?.blocks?.find(
+                (cb: any) => cb.start_time === block.start_time && cb.end_time === block.end_time
+              );
+              const active = capacityBlock?.active ?? 0;
               const pct = Math.min(100, Math.round((active / max) * 100));
               const color = pct >= 100 ? "bg-destructive" : pct >= 80 ? "bg-amber-500" : "bg-emerald-500";
               return (
