@@ -12,6 +12,17 @@ function AuthCallback() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
+        console.log('Starting Google OAuth callback handling');
+        
+        // Check URL parameters for error
+        const urlParams = new URLSearchParams(window.location.search);
+        const errorParam = urlParams.get('error');
+        if (errorParam) {
+          console.error('OAuth error in URL:', errorParam);
+          setError(`OAuth error: ${errorParam}`);
+          return;
+        }
+
         // The backend should have set a cookie with the token
         // We'll check if we're authenticated by trying to get the user
         console.log('Fetching user from /api/auth/me');
@@ -65,7 +76,9 @@ function AuthCallback() {
       }
     };
 
-    handleCallback();
+    // Delay execution to ensure React Router context is fully initialized
+    const timer = setTimeout(handleCallback, 100);
+    return () => clearTimeout(timer);
   }, []);
 
   if (error) {
