@@ -63,20 +63,87 @@ function PatientAppointments() {
     if (!previewPrescription || !prescriptionRef.current) return;
     
     try {
-      const canvas = await html2canvas(prescriptionRef.current, {
-        scale: 2,
+      // Clone the element to avoid modifying the original
+      const clone = prescriptionRef.current.cloneNode(true) as HTMLElement;
+      
+      // Inject a style tag with hex color overrides for CSS variables
+      const style = document.createElement('style');
+      style.textContent = `
+        * {
+          --background: #ffffff !important;
+          --foreground: #09090b !important;
+          --primary: #0f172a !important;
+          --primary-foreground: #f8fafc !important;
+          --secondary: #f1f5f9 !important;
+          --secondary-foreground: #0f172a !important;
+          --muted: #f1f5f9 !important;
+          --muted-foreground: #64748b !important;
+          --accent: #f1f5f9 !important;
+          --accent-foreground: #0f172a !important;
+          --destructive: #ef4444 !important;
+          --destructive-foreground: #f8fafc !important;
+          --border: #e2e8f0 !important;
+          --input: #e2e8f0 !important;
+          --ring: #0f172a !important;
+          --radius: 0.5rem !important;
+        }
+        /* Preserve line heights and spacing */
+        p, div, span {
+          line-height: inherit !important;
+        }
+        /* Fix dotted underline overlap */
+        .border-b, .border-t, .border-l, .border-r, .border {
+          border-style: solid !important;
+        }
+        /* Remove text decorations that might overlap */
+        * {
+          text-decoration: none !important;
+        }
+      `;
+      clone.appendChild(style);
+      
+      // Get the actual computed dimensions from the original element
+      const computedStyle = window.getComputedStyle(prescriptionRef.current);
+      const originalWidth = prescriptionRef.current.offsetWidth;
+      const originalHeight = prescriptionRef.current.offsetHeight;
+      
+      // Set explicit dimensions to match the original
+      clone.style.width = `${originalWidth}px`;
+      clone.style.height = `${originalHeight}px`;
+      clone.style.minWidth = `${originalWidth}px`;
+      clone.style.maxWidth = `${originalWidth}px`;
+      clone.style.overflow = 'visible';
+      
+      // Temporarily append the clone to the body
+      clone.style.position = 'absolute';
+      clone.style.left = '-9999px';
+      clone.style.top = '0';
+      clone.style.visibility = 'visible';
+      document.body.appendChild(clone);
+      
+      const canvas = await html2canvas(clone, {
+        scale: 4, // Higher scale for better spacing preservation
         useCORS: true,
         logging: false,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: originalWidth,
+        height: originalHeight,
+        letterRendering: true,
+        useStrictContainerSize: true,
       });
       
-      const imgData = canvas.toDataURL('image/png');
+      // Remove the clone from the DOM
+      document.body.removeChild(clone);
+      
+      const imgData = canvas.toDataURL('image/png', 1.0);
       const pdf = new jsPDF('p', 'mm', 'a4');
       
       const imgWidth = 190; // A4 width in mm minus margins
       const pageHeight = 297; // A4 height in mm
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       
-      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight, undefined, 'FAST');
       pdf.save(`prescription-${previewPrescription.patient?.firstName}-${new Date(previewPrescription.scheduledAt).toLocaleDateString()}.pdf`);
     } catch (error) {
       console.error('Failed to generate PDF:', error);

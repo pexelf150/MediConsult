@@ -301,7 +301,7 @@ function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-white/10 bg-[oklch(0.12_0.02_220)] text-white">
+      <footer className="relative z-10 border-t border-white/10 bg-[oklch(0.12_0.02_220)] text-white" style={{ fontFamily: 'sans-serif' }}>
         <div className="mx-auto max-w-[1200px] px-[60px] py-12">
           <div className="flex flex-wrap justify-between gap-10">
             <div className="flex-1 min-w-[320px] max-w-[420px]">
