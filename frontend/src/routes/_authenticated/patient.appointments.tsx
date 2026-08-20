@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Video, Activity, Loader2, FileText, Download, X, CalendarClock, AlertCircle } from "lucide-react";
+import { Video, Activity, Loader2, FileText, Download, X, CalendarClock, AlertCircle, Ticket } from "lucide-react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { apiUrl } from "@/lib/api-config";
@@ -176,6 +176,43 @@ function PatientAppointments() {
     },
   });
 
+  // Fetch token status for each doctor with normal appointments
+  const { data: tokenStatusMap } = useQuery({
+    queryKey: ["token-status", appointments],
+    queryFn: async () => {
+      if (!appointments) return {};
+      
+      const doctorIds = [...new Set(
+        appointments
+          .filter((a: any) => a.type === 'normal')
+          .map((a: any) => a.doctor?._id || a.doctor)
+      )];
+      
+      const statusMap: Record<string, any> = {};
+      const today = new Date().toISOString().split('T')[0];
+      
+      await Promise.all(
+        doctorIds.map(async (doctorId) => {
+          try {
+            const response = await fetch(apiUrl(`/appointments/token-status/${doctorId}?date=${today}`), {
+              credentials: 'include',
+            });
+            if (response.ok) {
+              const result = await response.json();
+              statusMap[doctorId] = result.data;
+            }
+          } catch (error) {
+            console.error('Failed to fetch token status:', error);
+          }
+        })
+      );
+      
+      return statusMap;
+    },
+    enabled: !!appointments,
+    refetchInterval: 10000, // Refresh every 10 seconds
+  });
+
   // Create a map of appointment IDs to request status
   const pendingRequestsMap = new Map(
     rescheduleRequests
@@ -256,14 +293,24 @@ function PatientAppointments() {
             <div key={date} className="space-y-3">
               <h3 className="text-sm font-semibold text-muted-foreground">{date}</h3>
               <ul className="grid gap-3">
-                {appointments.map((a) => (
-                <li key={a._id} className={`rounded-xl border bg-card p-4 shadow-soft ${a.isRescheduled ? 'border-amber-200 bg-amber-50' : ''}`}>
+                {appointments.map((a) => {
+                  const doctorId = a.doctor?._id || a.doctor;
+                  const tokenStatus = tokenStatusMap?.[doctorId];
+                  const isToday = new Date(a.scheduledAt).toDateString() === new Date().toDateString();
+                  
+                  return (
+                  <li key={a._id} className={`rounded-xl border bg-card p-4 shadow-soft ${a.isRescheduled ? 'border-amber-200 bg-amber-50' : ''}`}>
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         {a.type === "urgent" && (
                           <span className="inline-flex items-center gap-1 rounded-full bg-urgent/10 px-2 py-0.5 text-xs font-medium text-urgent">
                             <Activity className="h-3 w-3" /> Urgent
+                          </span>
+                        )}
+                        {a.type === "normal" && a.tokenNumber && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                            <Ticket className="h-3 w-3" /> Token #{a.tokenNumber}
                           </span>
                         )}
                         <span className="text-sm font-medium">
@@ -279,6 +326,29 @@ function PatientAppointments() {
                       <div className="mt-1 text-xs text-muted-foreground">
                         Status: {a.status}
                       </div>
+                      {a.type === "normal" && isToday && tokenStatus && (
+                        <div className="mt-2 rounded-lg bg-slate-50 border border-slate-200 p-2 text-xs">
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Current Token:</span>
+                            <span className="font-semibold text-slate-700">
+                              {tokenStatus.currentToken ? `#${tokenStatus.currentToken}` : 'Not started'}
+                            </span>
+                          </div>
+                          {a.tokenNumber && (
+                            <div className="flex items-center justify-between mt-1">
+                              <span className="text-muted-foreground">Your Token:</span>
+                              <span className={`font-semibold ${a.tokenNumber === tokenStatus.currentToken ? 'text-emerald-600' : a.tokenNumber < tokenStatus.currentToken ? 'text-slate-400' : 'text-amber-600'}`}>
+                                #{a.tokenNumber}
+                              </span>
+                            </div>
+                          )}
+                          {tokenStatus.currentToken && a.tokenNumber && a.tokenNumber > tokenStatus.currentToken && (
+                            <div className="mt-1 text-amber-700">
+                              {a.tokenNumber - tokenStatus.currentToken} patient(s) ahead of you
+                            </div>
+                          )}
+                        </div>
+                      )}
                       {a.isRescheduled && a.rescheduleHistory && a.rescheduleHistory.length > 0 && (
                         <div className="mt-1 text-xs text-amber-700">
                           Originally scheduled: {new Date(a.rescheduleHistory[0].originalScheduledAt).toLocaleString()}
@@ -399,7 +469,8 @@ function PatientAppointments() {
                     </div>
                   </div>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           </div>
         ))}

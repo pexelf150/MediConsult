@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Stethoscope, User as UserIcon, Loader2, Mail, Lock, ArrowRight, Phone, Calendar, Users } from "lucide-react";
+import CountryCodeSelector from "@/components/country-code-selector";
 import { toast } from "sonner";
 
 interface AuthFormProps {
@@ -26,6 +27,7 @@ export function AuthForm({ onSuccess, initialRole, onForgotPassword }: AuthFormP
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [gender, setGender] = useState("");
   const [phone, setPhone] = useState("");
+  const [countryCode, setCountryCode] = useState("+94");
   const [doctorCode, setDoctorCode] = useState("");
   const [doctorVerified, setDoctorVerified] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -77,7 +79,7 @@ export function AuthForm({ onSuccess, initialRole, onForgotPassword }: AuthFormP
               password,
               firstName,
               lastName,
-              phone,
+              phone: `${countryCode}${phone}`,
               dateOfBirth,
               gender,
             }),
@@ -103,6 +105,7 @@ export function AuthForm({ onSuccess, initialRole, onForgotPassword }: AuthFormP
           setDateOfBirth("");
           setGender("");
           setPhone("");
+          setCountryCode("+94");
         } else if (role === "doctor") {
           // Use backend API for doctor registration
           const nameParts = fullName.trim().split(' ');
@@ -344,15 +347,23 @@ export function AuthForm({ onSuccess, initialRole, onForgotPassword }: AuthFormP
                   </div>
                 </div>
                 <div className="mt-3">
-                  <PillInput
-                    id="phone"
-                    type="tel"
-                    placeholder="Contact number"
-                    value={phone}
-                    onChange={setPhone}
-                    icon={<Phone className="h-4 w-4" />}
-                    required
-                  />
+                  <div className="flex gap-2">
+                    <CountryCodeSelector value={countryCode} onChange={setCountryCode} variant="signup" />
+                    <div className="relative flex-1">
+                      <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-emerald-600">
+                        <Phone className="h-4 w-4" />
+                      </div>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        placeholder="Contact number"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        required
+                        className="h-11 rounded-full border-0 bg-emerald-50 pl-11 pr-4 text-sm placeholder:text-emerald-700/50 focus-visible:ring-2 focus-visible:ring-emerald-500"
+                      />
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             )}

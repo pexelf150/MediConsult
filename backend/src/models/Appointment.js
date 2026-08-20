@@ -69,6 +69,10 @@ const appointmentSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    tokenNumber: {
+      type: Number,
+      default: null,
+    },
     startedAt: {
       type: Date,
       default: null,

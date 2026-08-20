@@ -14,6 +14,28 @@ import {
   notifyPaymentSuccess,
 } from './notificationService.js';
 
+// Helper function to calculate token number for a normal appointment
+const calculateTokenNumber = async (doctorId, scheduledDate) => {
+  const startOfDay = new Date(scheduledDate);
+  startOfDay.setHours(0, 0, 0, 0);
+  
+  const endOfDay = new Date(scheduledDate);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  // Count confirmed normal appointments for this doctor on this day
+  const count = await Appointment.countDocuments({
+    doctor: doctorId,
+    type: 'normal',
+    status: { $in: ['confirmed', 'in_progress', 'completed'] },
+    scheduledAt: {
+      $gte: startOfDay,
+      $lte: endOfDay,
+    },
+  });
+
+  return count + 1; // Token number is count + 1
+};
+
 // Health metrics categorization functions
 const categorizeCholesterol = (value) => {
   if (!value) return null;
@@ -57,6 +79,11 @@ export const createNormalAppointment = async (patientId, appointmentData) => {
     throw new ApiError(404, 'Selected doctor is not available');
   }
 
+  const appointmentDate = scheduledAt || new Date(Date.now() + 24 * 60 * 60 * 1000);
+  
+  // Calculate token number for this appointment
+  const tokenNumber = await calculateTokenNumber(doctor._id, appointmentDate);
+
   const appointment = await Appointment.create({
     patient: patientId,
     doctor: doctor._id,
@@ -64,10 +91,11 @@ export const createNormalAppointment = async (patientId, appointmentData) => {
     status: 'scheduled',
     symptoms,
     severity,
-    scheduledAt: scheduledAt || new Date(Date.now() + 24 * 60 * 60 * 1000),
+    scheduledAt: appointmentDate,
     contactPhone,
     bloodGroup,
     healthMetrics,
+    tokenNumber,
   });
 
   const meeting = createMeetingForAppointment(appointment._id, doctor, { _id: patientId });
@@ -395,6 +423,9 @@ export const completeAppointmentAfterPayment = async (payment, io) => {
     const contactPhone = payment.metadata?.contactPhone || '';
     const bloodGroup = payment.metadata?.bloodGroup;
 
+    // Calculate token number for this appointment
+    const tokenNumber = await calculateTokenNumber(doctor._id, reservation.scheduledAt);
+
     appointment = await Appointment.create({
       patient: payment.patient,
       doctor: doctor._id,
@@ -420,6 +451,7 @@ export const completeAppointmentAfterPayment = async (payment, io) => {
           level: categorizeBloodPressure(bloodPressure),
         },
       },
+      tokenNumber,
     });
 
     const meeting = createMeetingForAppointment(appointment._id, doctor, patient);
@@ -446,6 +478,15 @@ export const completeAppointmentAfterPayment = async (payment, io) => {
 
     await notifyPatientAppointmentConfirmed(io, patient, appointment, doctor);
     await notifyDoctorAppointmentConfirmed(io, doctor, appointment, patient);
+
+    console.log('Appointment created successfully:', {
+      appointmentId: appointment._id,
+      patientId: appointment.patient,
+      doctorId: appointment.doctor,
+      status: appointment.status,
+      scheduledAt: appointment.scheduledAt,
+      tokenNumber: appointment.tokenNumber,
+    });
   }
 
   return appointment;
@@ -465,17 +506,21 @@ export const getAppointmentsForUser = async (userId, role, { status, type, page 
     query.scheduledAt = { $gte: dayStart, $lte: dayEnd };
   }
 
+  console.log('Querying appointments with query:', JSON.stringify(query));
+
   const skip = (page - 1) * limit;
 
   const [appointments, total] = await Promise.all([
     Appointment.find(query)
       .populate('patient', 'firstName lastName email phone dateOfBirth gender')
       .populate('doctor', 'firstName lastName specialization address contactEmail phone')
-      .sort({ scheduledAt: 1 })
+      .sort({ scheduledAt: -1 })
       .skip(skip)
       .limit(limit),
     Appointment.countDocuments(query),
   ]);
+
+  console.log('Found appointments:', appointments.length, 'Total:', total);
 
   return {
     appointments,
@@ -648,6 +693,108 @@ export const rescheduleAppointment = async (appointmentId, userId, role, newSche
   ]);
 };
 
+export const getTokenStatus = async (doctorId, date) => {
+  const targetDate = date ? new Date(date) : new Date();
+  const startOfDay = new Date(targetDate);
+  startOfDay.setHours(0, 0, 0, 0);
+  
+  const endOfDay = new Date(targetDate);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  // Get all normal appointments for this doctor on this day
+  const appointments = await Appointment.find({
+    doctor: doctorId,
+    type: 'normal',
+    scheduledAt: {
+      $gte: startOfDay,
+      $lte: endOfDay,
+    },
+  }).populate('patient', 'firstName lastName')
+    .sort({ tokenNumber: 1 });
+
+  // Find the highest completed token number
+  const completedAppointments = appointments.filter(appt => appt.status === 'completed');
+  const highestCompletedToken = completedAppointments.length > 0 
+    ? Math.max(...completedAppointments.map(appt => appt.tokenNumber || 0))
+    : 0;
+
+  // Find current token (appointment in progress)
+  const currentAppointment = appointments.find(appt => appt.status === 'in_progress');
+  let currentToken = currentAppointment?.tokenNumber || null;
+
+  // If no appointment in progress, the current token is the next one after the highest completed
+  if (!currentToken && highestCompletedToken > 0) {
+    const nextAfterCompleted = appointments.find(appt => 
+      appt.tokenNumber === highestCompletedToken + 1
+    );
+    if (nextAfterCompleted) {
+      currentToken = nextAfterCompleted.tokenNumber;
+    }
+  }
+
+  // Find next token (next confirmed appointment after current)
+  const nextAppointment = appointments.find(appt => 
+    appt.status === 'confirmed' && 
+    (!currentToken || appt.tokenNumber > currentToken)
+  );
+  const nextToken = nextAppointment?.tokenNumber || null;
+
+  // If no current token but there are confirmed appointments, the first confirmed is the current
+  if (!currentToken && nextToken) {
+    currentToken = nextToken;
+  }
+
+  // Count total appointments for the day
+  const totalAppointments = appointments.length;
+
+  // Count completed appointments
+  const completedCount = completedAppointments.length;
+
+  return {
+    currentToken,
+    nextToken,
+    totalAppointments,
+    completedCount,
+    appointments: appointments.map(appt => ({
+      id: appt._id,
+      tokenNumber: appt.tokenNumber,
+      patientName: `${appt.patient.firstName} ${appt.patient.lastName}`,
+      status: appt.status,
+      scheduledAt: appt.scheduledAt,
+    })),
+  };
+};
+
+export const updateCurrentToken = async (doctorId, appointmentId, newStatus) => {
+  const appointment = await Appointment.findOne({
+    _id: appointmentId,
+    doctor: doctorId,
+    type: 'normal',
+  });
+
+  if (!appointment) {
+    throw new ApiError(404, 'Appointment not found');
+  }
+
+  // Update the appointment status
+  appointment.status = newStatus;
+  
+  if (newStatus === 'in_progress') {
+    appointment.startedAt = new Date();
+  } else if (newStatus === 'completed') {
+    appointment.completedAt = new Date();
+  }
+
+  await appointment.save();
+
+  await appointment.populate([
+    { path: 'patient', select: 'firstName lastName email phone' },
+    { path: 'doctor', select: 'firstName lastName specialization address contactEmail phone' },
+  ]);
+
+  return appointment;
+};
+
 export default {
   createNormalAppointment,
   initiateUrgentAppointment,
@@ -659,4 +806,6 @@ export default {
   updateAppointmentStatus,
   cancelAppointment,
   rescheduleAppointment,
+  getTokenStatus,
+  updateCurrentToken,
 };

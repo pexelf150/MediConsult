@@ -1,5 +1,6 @@
 import Notification from '../models/Notification.js';
 import { emitToDoctor, emitToPatient } from '../config/socket.js';
+import { sendUrgentConsultationEmail } from '../config/email.js';
 
 export const createNotification = async ({
   recipientId,
@@ -52,6 +53,20 @@ export const notifyDoctorUrgentAppointment = async (io, doctor, appointment, pat
         createdAt: appointment.createdAt,
       },
     });
+  }
+
+  // Send email notification to doctor
+  try {
+    await sendUrgentConsultationEmail(
+      doctor.contactEmail || doctor.email,
+      `${doctor.firstName} ${doctor.lastName}`,
+      `${patient.firstName} ${patient.lastName}`,
+      appointment.symptoms,
+      appointment.jitsi?.meetingUrl || 'Meeting URL will be provided shortly'
+    );
+  } catch (emailError) {
+    console.error('Failed to send urgent consultation email:', emailError);
+    // Don't throw error - email failure shouldn't block the notification
   }
 
   return notification;

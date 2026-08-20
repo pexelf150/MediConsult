@@ -128,4 +128,23 @@ router.post(
   appointmentController.finalizePayment
 );
 
+// Token management routes
+router.get(
+  '/token-status/:id',
+  appointmentIdValidation,
+  validate,
+  appointmentController.getTokenStatus
+);
+
+router.post(
+  '/token/update',
+  restrictTo('doctor'),
+  [
+    body('appointmentId').isMongoId().withMessage('Invalid appointment ID'),
+    body('status').isIn(['confirmed', 'in_progress', 'completed']).withMessage('Invalid status'),
+  ],
+  validate,
+  appointmentController.updateCurrentToken
+);
+
 export default router;

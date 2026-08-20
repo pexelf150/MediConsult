@@ -168,6 +168,27 @@ export const finalizePayment = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, 'Payment finalized successfully', { appointment }));
 });
 
+export const getTokenStatus = asyncHandler(async (req, res) => {
+  const { date } = req.query;
+  const doctorId = req.params.id;
+
+  const tokenStatus = await appointmentService.getTokenStatus(doctorId, date);
+
+  res.status(200).json(new ApiResponse(200, 'Token status retrieved', tokenStatus));
+});
+
+export const updateCurrentToken = asyncHandler(async (req, res) => {
+  const { appointmentId, status } = req.body;
+
+  const appointment = await appointmentService.updateCurrentToken(
+    req.user._id,
+    appointmentId,
+    status
+  );
+
+  res.status(200).json(new ApiResponse(200, 'Current token updated', { appointment }));
+});
+
 export default {
   createNormal,
   initiateUrgent,
@@ -182,4 +203,6 @@ export default {
   getSlotStatus,
   rescheduleAppointment,
   finalizePayment,
+  getTokenStatus,
+  updateCurrentToken,
 };

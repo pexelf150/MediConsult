@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/useAuth";
 import { User, Mail, Phone, Stethoscope, Briefcase, Save, Loader2, Info, CheckCircle2, XCircle } from "lucide-react";
+import CountryCodeSelector from "@/components/country-code-selector";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/doctor/profile")({
@@ -21,6 +22,7 @@ function DoctorProfile() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
+  const [countryCode, setCountryCode] = useState("+94");
   const [specialty, setSpecialty] = useState("");
   const [experienceYears, setExperienceYears] = useState("");
   const [bio, setBio] = useState("");
@@ -45,7 +47,18 @@ function DoctorProfile() {
       console.log('Doctor data from API:', doctor);
       setFirstName(doctor.firstName || "");
       setLastName(doctor.lastName || "");
-      setPhone(doctor.phone || "");
+      // Extract country code from phone number if it exists
+      if (doctor.phone && doctor.phone.startsWith('+')) {
+        const match = doctor.phone.match(/^(\+[0-9]{1,3})(.*)$/);
+        if (match) {
+          setCountryCode(match[1]);
+          setPhone(match[2]);
+        } else {
+          setPhone(doctor.phone || "");
+        }
+      } else {
+        setPhone(doctor.phone || "");
+      }
       setSpecialty(doctor.specialization || "");
       setExperienceYears(doctor.experienceYears ? String(doctor.experienceYears) : "");
       setBio(doctor.bio || "");
@@ -70,7 +83,7 @@ function DoctorProfile() {
       const updateData = {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
-        phone: phone.trim(),
+        phone: `${countryCode}${phone.trim()}`,
         specialization: specialty.trim(),
         bio: bio.trim(),
         experienceYears: expNum,
@@ -120,216 +133,215 @@ function DoctorProfile() {
   const initials = `${firstName[0] || ""}${lastName[0] || ""}`.toUpperCase();
 
   return (
-    <div className="mx-auto max-w-4xl">
-      <div className="mb-8">
-        <h1 className="text-3xl tracking-tight text-foreground">Profile Management</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Manage your professional details, clinical status, and consultation fees.
-        </p>
-      </div>
-
-      <div className="grid gap-8 md:grid-cols-3">
-        {/* Left Side: Avatar Card */}
-        <div className="md:col-span-1">
-          <div className="rounded-2xl border border-emerald-100 bg-card p-6 text-center shadow-soft">
-            <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-emerald-50 text-2xl font-bold text-emerald-700 border-2 border-emerald-200">
-              {initials || <User className="h-10 w-10 text-emerald-600" />}
+    <div className="w-full min-h-screen bg-slate-50 flex items-center justify-center p-6">
+      <div className="w-full max-w-4xl bg-white rounded-2xl overflow-hidden shadow-lg">
+        {/* Header */}
+        <div className="bg-slate-800 px-8 py-8 flex items-center gap-6">
+          <div className="w-24 h-24 rounded-full border-4 border-white/60 overflow-hidden shrink-0 bg-emerald-200">
+            <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-emerald-700">
+              {initials || <User className="h-12 w-12 text-emerald-600" />}
             </div>
-            <h2 className="mt-4 text-xl font-semibold text-foreground">
-              Dr. {doctor?.full_name || "Doctor Profile"}
-            </h2>
-            <p className="text-xs text-muted-foreground mt-1">
-              {specialty || "Medical Specialist"}
-            </p>
-            <p className="text-xs font-medium text-emerald-700 uppercase tracking-widest bg-emerald-50 rounded-full px-2.5 py-0.5 inline-block mt-3">
-              Doctor
-            </p>
-
-            <div className="mt-6 border-t border-emerald-50 pt-6 text-left text-sm text-muted-foreground space-y-4">
-              <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-emerald-600 shrink-0" />
-                <span className="truncate">{user?.email}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Stethoscope className="h-4 w-4 text-emerald-600 shrink-0" />
-                <span>Licensed Physician</span>
-              </div>
+          </div>
+          <div className="text-white">
+            <h1 className="text-2xl font-light">
+              Dr. {firstName} {lastName},
+              <br />
+              <span className="font-semibold">I&apos;m a {specialty || "Medical Specialist"}</span>
+            </h1>
+            <div className="flex flex-wrap gap-6 mt-4 text-sm text-emerald-50">
+              <span className="flex items-center gap-2">
+                <Mail className="h-4 w-4" /> {user?.email}
+              </span>
+              <span className="flex items-center gap-2">
+                <Phone className="h-4 w-4" /> {countryCode} {phone}
+              </span>
+              <span className="flex items-center gap-2">
+                <Stethoscope className="h-4 w-4" /> {experienceYears} Years Experience
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Right Side: Profile Details Form & Password Change */}
-        <div className="md:col-span-2 space-y-6">
-          <div className="rounded-2xl border border-emerald-100 bg-card p-6 shadow-soft">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <h3 className="text-lg font-semibold text-foreground border-b pb-3 border-emerald-50">
-                Professional Details
-              </h3>
-
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
-                    <Input
-                      id="firstName"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      required
-                      placeholder="Jane"
-                      className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
-                    />
+        {/* Body */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-8">
+          {/* Left column */}
+          <div className="flex flex-col gap-6">
+            <div>
+              <h2 className="text-xs font-semibold tracking-wide text-slate-400 mb-4">
+                PROFESSIONAL DETAILS
+              </h2>
+              <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">First Name</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
+                      <Input
+                        id="firstName"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        required
+                        placeholder="Jane"
+                        className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
+                      />
+                    </div>
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
-                    <Input
-                      id="lastName"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      required
-                      placeholder="Smith"
-                      className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
-                    />
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
+                      <Input
+                        id="lastName"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        required
+                        placeholder="Smith"
+                        className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
+                      />
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
-                    <Input
-                      id="email"
-                      type="email"
-                      value={user?.email || ""}
-                      disabled
-                      className="pl-10 rounded-xl bg-muted/40 border-muted-foreground/10 text-muted-foreground cursor-not-allowed"
-                    />
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email Address</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
+                      <Input
+                        id="email"
+                        type="email"
+                        value={user?.email || ""}
+                        disabled
+                        className="pl-10 rounded-xl bg-muted/40 border-muted-foreground/10 text-muted-foreground cursor-not-allowed"
+                      />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">Email address cannot be changed</p>
                   </div>
-                  <p className="text-[10px] text-muted-foreground">Email address cannot be changed</p>
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Contact Number</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+1 (555) 987-6543"
-                      className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
-                    />
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Contact Number</Label>
+                    <div className="space-y-2">
+                      <CountryCodeSelector value={countryCode} onChange={setCountryCode} />
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
+                        <Input
+                          id="phone"
+                          type="tel"
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          placeholder="77 123 4567"
+                          className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
+                        />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="specialty">Specialization</Label>
-                  <div className="relative">
-                    <Stethoscope className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
-                    <Input
-                      id="specialty"
-                      value={specialty}
-                      onChange={(e) => setSpecialty(e.target.value)}
-                      required
-                      placeholder="General Practitioner"
-                      className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
-                    />
+                  <div className="space-y-2">
+                    <Label htmlFor="specialty">Specialization</Label>
+                    <div className="relative">
+                      <Stethoscope className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
+                      <Input
+                        id="specialty"
+                        value={specialty}
+                        onChange={(e) => setSpecialty(e.target.value)}
+                        required
+                        placeholder="General Practitioner"
+                        className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
+                      />
+                    </div>
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="experience">Years of Experience</Label>
-                  <div className="relative">
-                    <Briefcase className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
-                    <Input
-                      id="experience"
-                      type="number"
-                      min="0"
-                      value={experienceYears}
-                      onChange={(e) => setExperienceYears(e.target.value)}
-                      required
-                      placeholder="8"
-                      className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
-                    />
+                  <div className="space-y-2">
+                    <Label htmlFor="experience">Years of Experience</Label>
+                    <div className="relative">
+                      <Briefcase className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
+                      <Input
+                        id="experience"
+                        type="number"
+                        min="0"
+                        value={experienceYears}
+                        onChange={(e) => setExperienceYears(e.target.value)}
+                        required
+                        placeholder="8"
+                        className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
+                      />
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="bio">Professional Biography</Label>
-                <div className="relative">
-                  <Info className="absolute left-3 top-3 h-4 w-4 text-emerald-600" />
-                  <Textarea
-                    id="bio"
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                    placeholder="Brief description of your education, specialization, and clinical experience..."
-                    className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500 min-h-[120px]"
-                  />
-                </div>
-              </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="bio">Professional Biography</Label>
+                    <div className="relative">
+                      <Info className="absolute left-3 top-3 h-4 w-4 text-emerald-600" />
+                      <Textarea
+                        id="bio"
+                        value={bio}
+                        onChange={(e) => setBio(e.target.value)}
+                        placeholder="Brief description of your education, specialization, and clinical experience..."
+                        className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500 min-h-[120px]"
+                      />
+                    </div>
+                  </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="address">Clinic Address (Optional)</Label>
-                <div className="relative">
-                  <Info className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
-                  <Input
-                    id="address"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder="123 Healthcare Street, Medical District, City 12345"
-                    className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
-                  />
-                </div>
-              </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Clinic Address (Optional)</Label>
+                    <div className="relative">
+                      <Info className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
+                      <Input
+                        id="address"
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        placeholder="123 Healthcare Street, Medical District, City 12345"
+                        className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
+                      />
+                    </div>
+                  </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="contactEmail">Contact Email (Optional)</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
-                  <Input
-                    id="contactEmail"
-                    type="email"
-                    value={contactEmail}
-                    onChange={(e) => setContactEmail(e.target.value)}
-                    placeholder="doctor@clinic.com"
-                    className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
-                  />
-                </div>
-              </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="contactEmail">Contact Email (Optional)</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
+                      <Input
+                        id="contactEmail"
+                        type="email"
+                        value={contactEmail}
+                        onChange={(e) => setContactEmail(e.target.value)}
+                        placeholder="doctor@clinic.com"
+                        className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
+                      />
+                    </div>
+                  </div>
 
-              <div className="flex justify-end pt-4 border-t border-emerald-50">
-                <Button
-                  type="submit"
-                  disabled={updateProfileMutation.isPending}
-                  className="gap-2 rounded-xl px-5 bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-700/10"
-                >
-                  {updateProfileMutation.isPending ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" /> Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4" /> Save Profile
-                    </>
-                  )}
-                </Button>
+                  <div className="flex justify-end pt-4 border-t border-emerald-50">
+                    <Button
+                      type="submit"
+                      disabled={updateProfileMutation.isPending}
+                      className="gap-2 rounded-xl px-5 bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-700/10"
+                    >
+                      {updateProfileMutation.isPending ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" /> Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4" /> Save Profile
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </form>
               </div>
-            </form>
+            </div>
           </div>
 
-          {/* Change Password Card */}
-          <div className="rounded-2xl border border-emerald-100 bg-card p-6 shadow-soft">
-            <PasswordChangeForm />
+          {/* Right column */}
+          <div className="flex flex-col gap-6">
+            <div>
+              <h2 className="text-xs font-semibold tracking-wide text-slate-400 mb-4">
+                SECURITY
+              </h2>
+              <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5">
+                <PasswordChangeForm />
+              </div>
+            </div>
           </div>
         </div>
       </div>
