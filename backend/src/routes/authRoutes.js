@@ -9,6 +9,7 @@ import {
   loginValidation,
   updateProfileValidation,
   changePasswordValidation,
+  deleteAccountValidation,
 } from '../validators/authValidator.js';
 
 const router = Router();
@@ -49,6 +50,7 @@ router.post('/logout', protect, authController.logout);
 router.get('/me', protect, authController.getMe);
 router.patch('/me', protect, updateProfileValidation, validate, authController.updateMe);
 router.patch('/change-password', protect, changePasswordValidation, validate, authController.changePassword);
+router.delete('/delete-account', protect, deleteAccountValidation, validate, authController.deleteAccount);
 router.post('/google/url', authController.getGoogleAuthUrl);
 router.get('/google/callback', authController.handleGoogleCallback);
 

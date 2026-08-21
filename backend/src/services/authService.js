@@ -106,6 +106,14 @@ export const updateProfile = async (userId, updates) => {
 
   disallowedFields.forEach((field) => delete filteredUpdates[field]);
 
+  // Clean phone number by removing spaces
+  if (filteredUpdates.phone) {
+    filteredUpdates.phone = filteredUpdates.phone.replace(/\s/g, '');
+  }
+
+  console.log('Updating profile for userId:', userId);
+  console.log('Filtered updates:', filteredUpdates);
+
   // Check if user is a doctor and use Doctor model for doctor-specific fields
   const user = await User.findById(userId);
   if (!user) {
@@ -119,11 +127,13 @@ export const updateProfile = async (userId, updates) => {
       new: true,
       runValidators: true,
     });
+    console.log('Updated doctor profile:', updatedUser);
   } else {
     updatedUser = await User.findByIdAndUpdate(userId, filteredUpdates, {
       new: true,
       runValidators: true,
     });
+    console.log('Updated user profile:', updatedUser);
   }
 
   return updatedUser;
@@ -292,6 +302,22 @@ export const changePassword = async (userId, currentPassword, newPassword) => {
   return user;
 };
 
+export const deleteAccount = async (userId, password) => {
+  const user = await User.findById(userId).select('+password');
+  if (!user) {
+    throw new ApiError(404, 'User not found');
+  }
+
+  // Check if password is correct
+  if (!(await user.comparePassword(password))) {
+    throw new ApiError(401, 'Incorrect password');
+  }
+
+  // Delete user
+  await User.findByIdAndDelete(userId);
+  return user;
+};
+
 export default {
   registerPatient,
   registerDoctor,
@@ -303,4 +329,5 @@ export default {
   getGoogleAuthUrl,
   handleGoogleCallback,
   changePassword,
+  deleteAccount,
 };

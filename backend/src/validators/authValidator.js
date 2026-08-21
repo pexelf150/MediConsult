@@ -126,6 +126,10 @@ export const changePasswordValidation = [
     .withMessage('New password must contain uppercase, lowercase, and a number'),
 ];
 
+export const deleteAccountValidation = [
+  body('password').notEmpty().withMessage('Password is required'),
+];
+
 export default {
   patientRegisterValidation,
   doctorRegisterValidation,
@@ -142,4 +146,5 @@ export default {
   scheduleSlotIdValidation,
   reserveSlotValidation,
   changePasswordValidation,
+  deleteAccountValidation,
 };

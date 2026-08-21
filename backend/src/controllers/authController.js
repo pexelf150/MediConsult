@@ -84,6 +84,16 @@ export const changePassword = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, 'Password changed successfully'));
 });
 
+export const deleteAccount = asyncHandler(async (req, res) => {
+  const { password } = req.body;
+  await authService.deleteAccount(req.user._id, password);
+
+  // Clear auth cookie
+  authService.clearAuthCookie(res);
+
+  res.status(200).json(new ApiResponse(200, 'Account deleted successfully'));
+});
+
 export default {
   registerPatient,
   registerDoctor,
@@ -95,4 +105,5 @@ export default {
   getGoogleAuthUrl,
   handleGoogleCallback,
   changePassword,
+  deleteAccount,
 };

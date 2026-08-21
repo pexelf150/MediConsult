@@ -74,8 +74,11 @@ export const updateProfile = asyncHandler(async (req, res) => {
   const patientId = req.user._id;
   const { firstName, lastName, phone, gender, dateOfBirth, age } = req.body;
 
+  // Clean phone number by removing spaces
+  const cleanedPhone = phone ? phone.replace(/\s/g, '') : phone;
+
   console.log('Updating profile for patient ID:', patientId);
-  console.log('Fields to update:', { firstName, lastName, phone, gender, dateOfBirth, age });
+  console.log('Fields to update:', { firstName, lastName, phone: cleanedPhone, gender, dateOfBirth, age });
 
   const patient = await Patient.findById(patientId);
 
@@ -95,7 +98,7 @@ export const updateProfile = asyncHandler(async (req, res) => {
 
   patient.firstName = firstName || patient.firstName;
   patient.lastName = lastName || patient.lastName;
-  patient.phone = phone || patient.phone;
+  patient.phone = cleanedPhone || patient.phone;
   patient.gender = gender || patient.gender;
   patient.dateOfBirth = dateOfBirth || patient.dateOfBirth;
   patient.age = age || patient.age;
