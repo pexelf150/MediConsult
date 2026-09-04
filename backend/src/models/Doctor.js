@@ -43,6 +43,10 @@ const doctorSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
+  city: {
+    type: String,
+    trim: true,
+  },
   contactEmail: {
     type: String,
     trim: true,
