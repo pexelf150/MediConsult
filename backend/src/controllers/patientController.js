@@ -15,11 +15,11 @@ export const getDashboard = asyncHandler(async (req, res) => {
         status: { $in: ['scheduled', 'confirmed', 'in_progress'] },
         scheduledAt: { $gte: new Date() },
       })
-        .populate('doctor', 'firstName lastName specialization')
+        .populate('doctor', 'firstName lastName specialization licenseNumber address city contactEmail phone')
         .sort({ scheduledAt: 1 })
         .limit(5),
       Appointment.find({ patient: patientId })
-        .populate('doctor', 'firstName lastName specialization')
+        .populate('doctor', 'firstName lastName specialization licenseNumber address city contactEmail phone')
         .sort({ createdAt: -1 })
         .limit(5),
       Appointment.countDocuments({ patient: patientId, status: 'completed' }),

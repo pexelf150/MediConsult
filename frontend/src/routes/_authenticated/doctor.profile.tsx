@@ -38,6 +38,7 @@ function DoctorProfile() {
   const [experienceYears, setExperienceYears] = useState("");
   const [bio, setBio] = useState("");
   const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
   const [contactEmail, setContactEmail] = useState("");
 
   // Password change state
@@ -97,6 +98,7 @@ function DoctorProfile() {
       setExperienceYears(doctor.experienceYears ? String(doctor.experienceYears) : "");
       setBio(doctor.bio || "");
       setAddress(doctor.address || "");
+      setCity(doctor.city || "");
       setContactEmail(doctor.contactEmail || "");
       console.log('Final state - countryCode:', countryCode, 'phone:', phone);
     }
@@ -123,6 +125,7 @@ function DoctorProfile() {
         bio: bio.trim(),
         experienceYears: expNum,
         address: address.trim(),
+        city: city.trim(),
         contactEmail: contactEmail.trim(),
       };
       console.log('Sending update data:', updateData);
@@ -393,8 +396,8 @@ function DoctorProfile() {
                         </div>
                       </div>
 
-                      <div className="space-y-2 md:col-span-2">
-                        <Label htmlFor="address">Clinic Address</Label>
+                      <div className="space-y-2">
+                        <Label htmlFor="address">Clinic Address (Street)</Label>
                         <div className="relative">
                           <Info className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
                           <Input
@@ -402,7 +405,22 @@ function DoctorProfile() {
                             value={address}
                             onChange={(e) => setAddress(e.target.value)}
                             required
-                            placeholder="123 Healthcare Street, Medical District, City 12345"
+                            placeholder="123 Healthcare Street"
+                            className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="city">City & District</Label>
+                        <div className="relative">
+                          <Info className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
+                          <Input
+                            id="city"
+                            value={city}
+                            onChange={(e) => setCity(e.target.value)}
+                            required
+                            placeholder="Medical District, City 12345"
                             className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
                           />
                         </div>

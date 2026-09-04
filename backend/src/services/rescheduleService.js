@@ -16,7 +16,7 @@ export const createRescheduleRequest = async (data) => {
   // Check if appointment exists
   const appointment = await Appointment.findById(appointmentId)
     .populate('patient')
-    .populate('doctor');
+    .populate('doctor', 'firstName lastName specialization licenseNumber address city contactEmail phone');
 
   if (!appointment) {
     console.log('Appointment not found:', appointmentId);
@@ -97,7 +97,7 @@ export const getPatientRescheduleRequests = async (patientId) => {
   try {
     const requests = await RescheduleRequest.find({ patient: patientId })
       .populate('appointment')
-      .populate('doctor', 'firstName lastName email')
+      .populate('doctor', 'firstName lastName email licenseNumber address city contactEmail phone')
       .sort({ createdAt: -1 });
 
     return requests || [];
@@ -114,7 +114,7 @@ export const approveRescheduleRequest = async (requestId, reviewerId) => {
   const request = await RescheduleRequest.findById(requestId)
     .populate('appointment')
     .populate('patient')
-    .populate('doctor');
+    .populate('doctor', 'firstName lastName specialization licenseNumber address city contactEmail phone');
 
   if (!request) {
     throw new ApiError(404, 'Reschedule request not found');
@@ -169,7 +169,7 @@ export const rejectRescheduleRequest = async (requestId, reviewerId, rejectionRe
   const request = await RescheduleRequest.findById(requestId)
     .populate('appointment')
     .populate('patient')
-    .populate('doctor');
+    .populate('doctor', 'firstName lastName specialization licenseNumber address city contactEmail phone');
 
   if (!request) {
     throw new ApiError(404, 'Reschedule request not found');

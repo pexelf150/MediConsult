@@ -188,7 +188,7 @@ export const sendUrgentConsultationEmail = async (doctorEmail, doctorName, patie
                     </svg>`}
                   </td>
                   <td style="padding-left:8px; vertical-align:middle;">
-                    <span style="font-size:18px; font-weight:700; color:#1a1a2e; letter-spacing:0.5px;">Premedi Lanka</span>
+                    <span style="font-size:18px; font-weight:400; color:#1a1a2e; letter-spacing:0.5px;">Premedi Lanka</span>
                   </td>
                 </tr>
               </table>
@@ -198,7 +198,7 @@ export const sendUrgentConsultationEmail = async (doctorEmail, doctorName, patie
           <!-- Urgent Banner -->
           <tr>
             <td style="padding:16px 32px; background-color:#fee2e2; border-left:4px solid #ef4444;">
-              <span style="font-size:14px; font-weight:700; color:#dc2626; text-transform:uppercase; letter-spacing:1px;">⚠️ Urgent Consultation Request</span>
+              <span style="font-size:14px; font-weight:400; color:#dc2626; text-transform:uppercase; letter-spacing:1px;">⚠️ Urgent Consultation Request</span>
             </td>
           </tr>
 
@@ -226,10 +226,10 @@ export const sendUrgentConsultationEmail = async (doctorEmail, doctorName, patie
                     
                     <p style="margin:0 0 8px 0; font-size:13px; color:#666666; font-weight:600;">Symptoms:</p>
                     <p style="margin:0 0 16px 0; font-size:14px; color:#111111; line-height:1.5;">${symptoms}</p>
-                    
-                    <p style="margin:0 0 8px 0; font-size:13px; color:#666666; font-weight:600;">Meeting URL:</p>
+
+                    <p style="margin:0 0 8px 0; font-size:13px; color:#666666; font-weight:600;">Dashboard Link:</p>
                     <p style="margin:0; font-size:14px; color:#111111;">
-                      <a href="${meetingUrl}" style="color:#10b981; text-decoration:none; font-weight:600;">${meetingUrl}</a>
+                      <a href="https://premedilanka.com/doctor" style="color:#10b981; text-decoration:none; font-weight:600;">https://premedilanka.com/doctor</a>
                     </p>
                   </td>
                 </tr>
@@ -243,7 +243,7 @@ export const sendUrgentConsultationEmail = async (doctorEmail, doctorName, patie
               <table role="presentation" cellpadding="0" cellspacing="0">
                 <tr>
                   <td>
-                    <a href="${meetingUrl}" style="display:inline-block; background-color:#10b981; color:#ffffff; padding:12px 24px; text-decoration:none; border-radius:4px; font-weight:600; font-size:14px;">Join Consultation Now</a>
+                    <a href="https://premedilanka.com/doctor" style="display:inline-block; background-color:#10b981; color:#ffffff; padding:12px 24px; text-decoration:none; border-radius:4px; font-weight:600; font-size:14px;">Join Consultation Now</a>
                   </td>
                 </tr>
               </table>
