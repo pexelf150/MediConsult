@@ -498,6 +498,9 @@ function PatientAppointments() {
                   patientAge={previewPrescription.patient?.age?.toString() || ""}
                   patientSex={previewPrescription.patient?.gender || ""}
                   date={new Date(previewPrescription.scheduledAt).toLocaleDateString()}
+                  doctorName={previewPrescription.doctor ? `${previewPrescription.doctor.firstName} ${previewPrescription.doctor.lastName}` : ""}
+                  doctorSpecialization={previewPrescription.doctor?.specialization || ""}
+                  doctorLicenseNumber={previewPrescription.doctor?.licenseNumber || ""}
                   medications={previewPrescription.prescription.medications}
                   notes={previewPrescription.prescription.notes}
                 />

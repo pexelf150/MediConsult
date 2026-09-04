@@ -491,6 +491,9 @@ function DoctorDashboard() {
                 patientAge={previewPrescription.patient?.age?.toString() || ""}
                 patientSex={previewPrescription.patient?.gender || ""}
                 date={new Date(previewPrescription.scheduledAt).toLocaleDateString()}
+                doctorName={userData ? `${userData.firstName} ${userData.lastName}` : ""}
+                doctorSpecialization={userData?.specialization || ""}
+                doctorLicenseNumber={userData?.licenseNumber || ""}
                 medications={previewPrescription.prescription.medications}
                 notes={previewPrescription.prescription.notes}
               />

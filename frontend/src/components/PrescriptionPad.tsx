@@ -22,6 +22,9 @@ interface PrescriptionPadV2Props {
   patientAge?: string;
   patientSex?: string;
   date?: string;
+  doctorName?: string;
+  doctorSpecialization?: string;
+  doctorLicenseNumber?: string;
   medications?: Array<{
     name: string;
     dosage: string;
@@ -99,6 +102,9 @@ const PrescriptionPadV2: React.FC<PrescriptionPadV2Props> = ({
   patientAge = "",
   patientSex = "",
   date = "",
+  doctorName = "",
+  doctorSpecialization = "",
+  doctorLicenseNumber = "",
   medications = [],
   notes = "",
 }) => {
@@ -251,36 +257,68 @@ const PrescriptionPadV2: React.FC<PrescriptionPadV2Props> = ({
           justifyContent: "space-between",
         }}
       >
-        <div>
-          <div
-            style={{
-              color: green,
-              fontFamily: "'Comic Sans MS', 'Segoe Print', 'Trebuchet MS', sans-serif",
-              fontWeight: 700,
-              fontSize: "clamp(16px, 5cqw, 24px)",
-              marginBottom: 4,
-            }}
-          >
-            {hospitalName}
-          </div>
-          <div style={{ fontSize: "clamp(8px, 2cqw, 10px)", color: "#555", marginBottom: 8 }}>
-            {slogan}
-          </div>
-          <div
-            style={{
-              fontSize: "clamp(7px, 1.8cqw, 9px)",
-              color: "#555",
-              lineHeight: 1.5,
-              marginBottom: 6,
-            }}
-          >
-            <div>{addressLine1}</div>
-            <div>{addressLine2}</div>
-          </div>
-          <div style={{ fontSize: "clamp(7px, 1.8cqw, 9px)", color: "#555", lineHeight: 1.5 }}>
-            <div>Phone : {phone}</div>
-            <div style={{ textDecoration: "underline" }}>{email}</div>
-            <div style={{ textDecoration: "underline" }}>{website}</div>
+        <div style={{ flex: 1 }}>
+          {/* Doctor details */}
+          {(doctorName || doctorSpecialization || doctorLicenseNumber) && (
+            <div
+              style={{
+                fontSize: "clamp(7px, 1.8cqw, 9px)",
+                color: "#4a4a4a",
+                marginBottom: 8,
+                paddingBottom: 8,
+                borderBottom: "1px dotted #ccc",
+              }}
+            >
+              {doctorName && (
+                <div style={{ fontWeight: "bold", marginBottom: 2 }}>
+                  Dr. {doctorName}
+                </div>
+              )}
+              {doctorSpecialization && (
+                <div style={{ marginBottom: 2 }}>
+                  {doctorSpecialization}
+                </div>
+              )}
+              {doctorLicenseNumber && (
+                <div style={{ marginBottom: 2 }}>
+                  License No: {doctorLicenseNumber}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Hospital details */}
+          <div>
+            <div
+              style={{
+                color: green,
+                fontFamily: "'Comic Sans MS', 'Segoe Print', 'Trebuchet MS', sans-serif",
+                fontWeight: 700,
+                fontSize: "clamp(16px, 5cqw, 24px)",
+                marginBottom: 4,
+              }}
+            >
+              {hospitalName}
+            </div>
+            <div style={{ fontSize: "clamp(8px, 2cqw, 10px)", color: "#555", marginBottom: 8 }}>
+              {slogan}
+            </div>
+            <div
+              style={{
+                fontSize: "clamp(7px, 1.8cqw, 9px)",
+                color: "#555",
+                lineHeight: 1.5,
+                marginBottom: 6,
+              }}
+            >
+              <div>{addressLine1}</div>
+              <div>{addressLine2}</div>
+            </div>
+            <div style={{ fontSize: "clamp(7px, 1.8cqw, 9px)", color: "#555", lineHeight: 1.5 }}>
+              <div>Phone : {phone}</div>
+              <div style={{ textDecoration: "underline" }}>{email}</div>
+              <div style={{ textDecoration: "underline" }}>{website}</div>
+            </div>
           </div>
         </div>
 

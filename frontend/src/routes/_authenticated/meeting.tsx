@@ -628,6 +628,9 @@ function MeetingPage() {
             patientAge={appointment.patient?.age?.toString() || ""}
             patientSex={appointment.patient?.gender || ""}
             date={new Date().toLocaleDateString()}
+            doctorName={doctorProfile ? `${doctorProfile.firstName} ${doctorProfile.lastName}` : ""}
+            doctorSpecialization={doctorProfile?.specialization || ""}
+            doctorLicenseNumber={doctorProfile?.licenseNumber || ""}
             medications={medications}
             notes={notes}
           />
