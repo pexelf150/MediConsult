@@ -489,8 +489,8 @@ function PatientAppointments() {
                 <PrescriptionPadV2
                   hospitalName="Premedi Lanka"
                   slogan="Your Health, Our Priority"
-                  addressLine1={previewPrescription.doctor?.address || "123 Healthcare Street"}
-                  addressLine2={previewPrescription.doctor?.city || "Medical District, City 12345"}
+                  addressLine1={previewPrescription.doctor?.contactEmail || previewPrescription.doctor?.email || "premedilanka@email.com"}
+                  addressLine2=""
                   phone={previewPrescription.doctor?.phone || "0123456789"}
                   email={previewPrescription.doctor?.contactEmail || previewPrescription.doctor?.email || "premedilanka@email.com"}
                   website="www.premedilanka.com"

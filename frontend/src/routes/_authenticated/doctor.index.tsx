@@ -11,6 +11,19 @@ import { motion, AnimatePresence } from "framer-motion";
 import { apiUrl } from "@/lib/api-config";
 import PrescriptionPadV2 from "@/components/PrescriptionPad";
 
+// Helper function to calculate age from date of birth
+const calculateAge = (dateOfBirth: string | Date | undefined): number => {
+  if (!dateOfBirth) return 0;
+  const birthDate = new Date(dateOfBirth);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+};
+
 export const Route = createFileRoute("/_authenticated/doctor/")({
   component: DoctorDashboard,
 });
@@ -210,17 +223,18 @@ function DoctorDashboard() {
   const { data: userData } = useQuery({
     queryKey: ["me"],
     queryFn: async () => {
-      const userStr = localStorage.getItem('user');
-      if (!userStr) return null;
       try {
-        const user = JSON.parse(userStr);
-        // Ensure _id is set from id if missing
-        if (user.id && !user._id) {
-          user._id = user.id;
+        const response = await fetch(apiUrl('/auth/me'), {
+          credentials: 'include',
+        });
+        const result = await response.json();
+        if (response.ok && result.data) {
+          // Handle both data.user and direct data structures
+          return result.data?.user || result.data;
         }
-        return user;
+        return null;
       } catch (e) {
-        console.error('Failed to parse user data', e);
+        console.error('Failed to fetch user data', e);
         return null;
       }
     },
@@ -482,13 +496,13 @@ function DoctorDashboard() {
               <PrescriptionPadV2
                 hospitalName="Premedi Lanka"
                 slogan="Your Health, Our Priority"
-                addressLine1={userData?.address || "123 Healthcare Street"}
-                addressLine2={userData?.city || "Medical District, City 12345"}
+                addressLine1={userData?.contactEmail || userData?.email || "premedilanka@email.com"}
+                addressLine2=""
                 phone={userData?.phone || "0123456789"}
                 email={userData?.contactEmail || userData?.email || "premedilanka@email.com"}
                 website="www.premedilanka.com"
                 patientName={previewPrescription.patient ? `${previewPrescription.patient.firstName} ${previewPrescription.patient.lastName}` : ""}
-                patientAge={previewPrescription.patient?.age?.toString() || ""}
+                patientAge={previewPrescription.patient?.age?.toString() || calculateAge(previewPrescription.patient?.dateOfBirth).toString()}
                 patientSex={previewPrescription.patient?.gender || ""}
                 date={new Date(previewPrescription.scheduledAt).toLocaleDateString()}
                 doctorName={userData ? `${userData.firstName} ${userData.lastName}` : ""}
@@ -566,17 +580,18 @@ function TodayScheduleCard() {
   const { data: userData } = useQuery({
     queryKey: ["me"],
     queryFn: async () => {
-      const userStr = localStorage.getItem('user');
-      if (!userStr) return null;
       try {
-        const user = JSON.parse(userStr);
-        // Ensure _id is set from id if missing
-        if (user.id && !user._id) {
-          user._id = user.id;
+        const response = await fetch(apiUrl('/auth/me'), {
+          credentials: 'include',
+        });
+        const result = await response.json();
+        if (response.ok && result.data) {
+          // Handle both data.user and direct data structures
+          return result.data?.user || result.data;
         }
-        return user;
+        return null;
       } catch (e) {
-        console.error('Failed to parse user data', e);
+        console.error('Failed to fetch user data', e);
         return null;
       }
     },

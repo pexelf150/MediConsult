@@ -39,6 +39,7 @@ function DoctorProfile() {
   const [bio, setBio] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
+  const [licenseNumber, setLicenseNumber] = useState("");
   const [contactEmail, setContactEmail] = useState("");
 
   // Password change state
@@ -99,6 +100,7 @@ function DoctorProfile() {
       setBio(doctor.bio || "");
       setAddress(doctor.address || "");
       setCity(doctor.city || "");
+      setLicenseNumber(doctor.licenseNumber || "");
       setContactEmail(doctor.contactEmail || "");
       console.log('Final state - countryCode:', countryCode, 'phone:', phone);
     }
@@ -126,6 +128,7 @@ function DoctorProfile() {
         experienceYears: expNum,
         address: address.trim(),
         city: city.trim(),
+        licenseNumber: licenseNumber.trim(),
         contactEmail: contactEmail.trim(),
       };
       console.log('Sending update data:', updateData);
@@ -360,6 +363,21 @@ function DoctorProfile() {
                             onChange={(e) => setSpecialty(e.target.value)}
                             required
                             placeholder="General Practitioner"
+                            className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="licenseNumber">Medical License Number</Label>
+                        <div className="relative">
+                          <Stethoscope className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
+                          <Input
+                            id="licenseNumber"
+                            value={licenseNumber}
+                            onChange={(e) => setLicenseNumber(e.target.value)}
+                            required
+                            placeholder="MED-12345"
                             className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
                           />
                         </div>

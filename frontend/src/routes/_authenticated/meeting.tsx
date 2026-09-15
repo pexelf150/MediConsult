@@ -16,6 +16,19 @@ import { useQueryClient } from "@tanstack/react-query";
 import { apiUrl } from "@/lib/api-config";
 import PrescriptionPadV2 from "@/components/PrescriptionPad";
 
+// Helper function to calculate age from date of birth
+const calculateAge = (dateOfBirth: string | Date | undefined): number => {
+  if (!dateOfBirth) return 0;
+  const birthDate = new Date(dateOfBirth);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+};
+
 const searchSchema = z.object({
   appointmentId: z.string().optional(),
 });
@@ -63,16 +76,15 @@ function MeetingPage() {
   const { data: doctorProfile } = useQuery({
     queryKey: ["doctor-profile"],
     queryFn: async () => {
-      const userStr = localStorage.getItem('user');
-      if (!userStr) return null;
       try {
-        const user = JSON.parse(userStr);
-        const response = await fetch(`/api/doctors/${user._id}/profile`, {
+        const response = await fetch(apiUrl('/auth/me'), {
           credentials: 'include',
         });
         const result = await response.json();
+        console.log('Doctor profile response:', result);
         if (response.ok && result.data) {
-          return result.data;
+          // Handle both data.user and direct data structures
+          return result.data?.user || result.data;
         }
         return null;
       } catch (e) {
@@ -98,6 +110,15 @@ function MeetingPage() {
     },
     enabled: !!appointmentId,
   });
+
+  // Get doctor data from appointment for patients or as fallback
+  const doctorData = isDoctor ? doctorProfile : appointment?.doctor;
+
+  // Debug logging
+  console.log('isDoctor:', isDoctor);
+  console.log('doctorProfile:', doctorProfile);
+  console.log('appointment?.doctor:', appointment?.doctor);
+  console.log('doctorData:', doctorData);
 
   const addMedication = () => {
     setMedications([...medications, { name: "", dosage: "", frequency: "", duration: "", instructions: "" }]);
@@ -379,9 +400,9 @@ function MeetingPage() {
                   <User className="w-full h-full stroke-white/85" strokeWidth={1.8} fill="none" />
                 </div>
                 <div className="flex-1">{appointment.patient ? `${appointment.patient.firstName} ${appointment.patient.lastName}` : "Unknown"}</div>
-                {appointment.patient?.age && (
-                  <div className="text-white/75 text-[12px]">{appointment.patient.age} yrs</div>
-                )}
+                <div className="text-white/75 text-[12px]">
+                  {appointment.patient?.age || calculateAge(appointment.patient?.dateOfBirth)} yrs
+                </div>
               </div>
 
               <div className="flex items-center gap-[10px] py-[12px_0] border-b border-white/18 text-[13px]">
@@ -619,18 +640,18 @@ function MeetingPage() {
           <PrescriptionPadV2
             hospitalName="Premedi Lanka"
             slogan="Your Health, Our Priority"
-            addressLine1={doctorProfile?.address || "123 Healthcare Street"}
-            addressLine2={doctorProfile?.city || "Medical District, City 12345"}
-            phone={doctorProfile?.phone || "0123456789"}
-            email={doctorProfile?.email || "premedilanka@email.com"}
+            addressLine1={doctorData?.contactEmail || doctorData?.email || "premedilanka@email.com"}
+            addressLine2=""
+            phone={doctorData?.phone || "0123456789"}
+            email={doctorData?.contactEmail || doctorData?.email || "premedilanka@email.com"}
             website="www.premedilanka.com"
             patientName={appointment.patient ? `${appointment.patient.firstName} ${appointment.patient.lastName}` : ""}
             patientAge={appointment.patient?.age?.toString() || ""}
             patientSex={appointment.patient?.gender || ""}
             date={new Date().toLocaleDateString()}
-            doctorName={doctorProfile ? `${doctorProfile.firstName} ${doctorProfile.lastName}` : ""}
-            doctorSpecialization={doctorProfile?.specialization || ""}
-            doctorLicenseNumber={doctorProfile?.licenseNumber || ""}
+            doctorName={doctorData ? `${doctorData.firstName} ${doctorData.lastName}` : ""}
+            doctorSpecialization={doctorData?.specialization || ""}
+            doctorLicenseNumber={doctorData?.licenseNumber || ""}
             medications={medications}
             notes={notes}
           />

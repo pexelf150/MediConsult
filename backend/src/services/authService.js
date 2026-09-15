@@ -96,7 +96,6 @@ export const updateProfile = async (userId, updates) => {
     'password',
     'role',
     'email',
-    'licenseNumber',
     'isActive',
     'lastLogin',
     '_id',
