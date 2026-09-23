@@ -31,13 +31,18 @@ const paymentSchema = new mongoose.Schema(
     },
     provider: {
       type: String,
-      enum: ['stripe', 'manual'],
+      enum: ['stripe', 'manual', 'mpgs'],
       default: 'stripe',
     },
     stripe: {
       sessionId: { type: String, default: null, index: true },
       paymentIntentId: { type: String, default: null },
       customerId: { type: String, default: null },
+    },
+    mpgs: {
+      sessionId: { type: String, default: null, index: true },
+      orderId: { type: String, default: null },
+      transactionId: { type: String, default: null },
     },
     metadata: {
       symptoms: String,

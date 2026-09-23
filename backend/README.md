@@ -24,7 +24,7 @@ backend/
 - **Separate portals**: Patient and Doctor authentication with role-based access control
 - **Appointment types**: Normal (scheduled) and Urgent (payment-gated)
 - **Urgent flow**: Symptoms → Stripe checkout → auto-create appointment → doctor notification
-- **Jitsi Meet**: Automatic meeting room creation with optional JWT authentication
+- **Zoom Meetings**: Automatic meeting room creation with Zoom API integration
 - **Real-time notifications**: Socket.io for instant urgent case alerts to doctors
 - **Stripe integration**: Secure payment gateway with webhook support
 - **Production practices**: Helmet, CORS, rate limiting, compression, error handling
@@ -58,8 +58,10 @@ npm start       # Production
 | `STRIPE_SECRET_KEY` | Stripe secret key |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
 | `URGENT_CONSULTATION_FEE` | Fee in smallest currency unit (e.g. 4999 = ₹49.99) |
-| `JITSI_DOMAIN` | Jitsi domain (default: meet.jit.si) |
-| `JITSI_USE_JWT` | Enable JWT-secured Jitsi rooms |
+| `ZOOM_API_KEY` | Zoom API key |
+| `ZOOM_API_SECRET` | Zoom API secret |
+| `ZOOM_USER_ID` | Zoom user/account ID |
+| `ZOOM_MEETING_TYPE` | Zoom meeting type (default: 2 for scheduled) |
 
 ## API Endpoints
 
@@ -82,7 +84,7 @@ npm start       # Production
 | POST | `/api/appointments/normal` | Patient | Book normal appointment |
 | POST | `/api/appointments/urgent/initiate` | Patient | Start urgent flow (returns Stripe checkout URL) |
 | GET | `/api/appointments/:id` | Both | Get appointment details |
-| GET | `/api/appointments/:id/meeting` | Both | Get Jitsi meeting join URL |
+| GET | `/api/appointments/:id/meeting` | Both | Get Zoom meeting join URL |
 | PATCH | `/api/appointments/:id/status` | Doctor | Update appointment status |
 | POST | `/api/appointments/:id/cancel` | Both | Cancel appointment |
 
@@ -120,7 +122,7 @@ npm start       # Production
 3. Patient completes payment on Stripe
 4. Stripe webhook OR POST /api/payments/verify triggers:
    - Assign available doctor
-   - Create appointment with Jitsi meeting
+   - Create appointment with Zoom meeting
    - Notify doctor via Socket.io + DB notification
 5. Both parties GET /api/appointments/:id/meeting for join URL
 ```

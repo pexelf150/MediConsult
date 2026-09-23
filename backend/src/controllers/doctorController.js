@@ -56,7 +56,7 @@ export const getDashboard = asyncHandler(async (req, res) => {
       status: { $nin: ['cancelled', 'completed'] },
     })
       .populate('patient', 'firstName lastName phone')
-      .select('patient doctor type status scheduledAt symptoms severity bloodGroup healthMetrics doctorApproved jitsi')
+      .select('patient doctor type status scheduledAt symptoms severity bloodGroup healthMetrics doctorApproved zoom')
       .sort({ scheduledAt: 1 }),
     Appointment.find({
       doctor: doctorId,

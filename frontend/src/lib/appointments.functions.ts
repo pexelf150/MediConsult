@@ -31,6 +31,6 @@ export const finalizeAppointmentPayment = createServerFn({ method: "POST" })
     return {
       ok: true,
       appointmentId: json.data?.appointment?._id,
-      meetingUrl: json.data?.appointment?.jitsi?.meetingUrl,
+      meetingUrl: json.data?.appointment?.zoom?.meetingUrl,
     };
   });

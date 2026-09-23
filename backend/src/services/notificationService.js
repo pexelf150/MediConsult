@@ -32,7 +32,7 @@ export const notifyDoctorUrgentAppointment = async (io, doctor, appointment, pat
     data: {
       appointmentId: appointment._id,
       patientId: patient._id,
-      meetingUrl: appointment.jitsi?.meetingUrl,
+      meetingUrl: appointment.zoom?.meetingUrl,
       type: 'urgent',
     },
   });
@@ -49,7 +49,7 @@ export const notifyDoctorUrgentAppointment = async (io, doctor, appointment, pat
           fullName: patient.fullName,
           phone: patient.phone,
         },
-        jitsi: appointment.jitsi,
+        zoom: appointment.zoom,
         createdAt: appointment.createdAt,
       },
     });
@@ -62,7 +62,7 @@ export const notifyDoctorUrgentAppointment = async (io, doctor, appointment, pat
       `${doctor.firstName} ${doctor.lastName}`,
       `${patient.firstName} ${patient.lastName}`,
       appointment.symptoms,
-      appointment.jitsi?.meetingUrl || 'Meeting URL will be provided shortly'
+      appointment.zoom?.meetingUrl || 'Meeting URL will be provided shortly'
     );
   } catch (emailError) {
     console.error('Failed to send urgent consultation email:', emailError);
@@ -81,7 +81,7 @@ export const notifyPatientAppointmentConfirmed = async (io, patient, appointment
     message: `Your ${appointment.type} consultation with Dr. ${doctor.lastName} has been confirmed.`,
     data: {
       appointmentId: appointment._id,
-      meetingUrl: appointment.jitsi?.meetingUrl,
+      meetingUrl: appointment.zoom?.meetingUrl,
     },
   });
 
@@ -127,7 +127,7 @@ export const notifyPaymentSuccess = async (io, patient, payment, appointment) =>
     data: {
       paymentId: payment._id,
       appointmentId: appointment?._id,
-      meetingUrl: appointment?.jitsi?.meetingUrl,
+      meetingUrl: appointment?.zoom?.meetingUrl,
     },
   });
 

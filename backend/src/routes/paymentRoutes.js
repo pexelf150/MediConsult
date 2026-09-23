@@ -32,4 +32,13 @@ router.post(
   paymentController.simulateSuccess
 );
 
+router.post(
+  '/mpgs/create',
+  body('amount').isNumeric().withMessage('Amount is required'),
+  validate,
+  paymentController.createMPGSPayment
+);
+
+router.get('/mpgs/return', paymentController.processMPGSReturn);
+
 export default router;

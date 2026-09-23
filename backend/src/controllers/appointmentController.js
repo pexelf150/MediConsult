@@ -2,7 +2,7 @@ import asyncHandler from '../utils/asyncHandler.js';
 import ApiResponse from '../utils/ApiResponse.js';
 import * as appointmentService from '../services/appointmentService.js';
 import * as reservationService from '../services/reservationService.js';
-import { getMeetingJoinUrl } from '../services/jitsiService.js';
+import { getMeetingJoinUrl } from '../services/zoomService.js';
 
 export const createNormal = asyncHandler(async (req, res) => {
   const appointment = await appointmentService.createNormalAppointment(req.user._id, req.body);
@@ -80,7 +80,8 @@ export const getMeetingLink = asyncHandler(async (req, res) => {
   res.status(200).json(
     new ApiResponse(200, 'Meeting link retrieved', {
       meetingUrl,
-      roomName: appointment.jitsi?.roomName,
+      meetingId: appointment.zoom?.meetingId,
+      meetingPassword: appointment.zoom?.meetingPassword,
       appointmentId: appointment._id,
     })
   );

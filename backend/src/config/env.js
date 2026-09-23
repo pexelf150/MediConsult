@@ -35,11 +35,15 @@ const env = {
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
     urgentPrice: parseInt(process.env.STRIPE_URGENT_CONSULTATION_PRICE, 10) || 4999,
   },
-  jitsi: {
-    domain: process.env.JITSI_DOMAIN || 'meet.jit.si',
-    appId: process.env.JITSI_APP_ID || '',
-    appSecret: process.env.JITSI_APP_SECRET || '',
-    useJwt: process.env.JITSI_USE_JWT === 'true',
+  zoom: {
+    // Meeting SDK credentials (for signature generation)
+    sdkKey: process.env.ZOOM_SDK_KEY || '',
+    sdkSecret: process.env.ZOOM_SDK_SECRET || '',
+    // Server-to-Server OAuth credentials (for API calls)
+    oauthAccountId: process.env.ZOOM_OAUTH_ACCOUNT_ID || '',
+    oauthClientId: process.env.ZOOM_OAUTH_CLIENT_ID || '',
+    oauthClientSecret: process.env.ZOOM_OAUTH_CLIENT_SECRET || '',
+    meetingType: parseInt(process.env.ZOOM_MEETING_TYPE, 10) || 2, // 2 = Scheduled meeting
   },
   consultation: {
     urgentFee: parseInt(process.env.URGENT_CONSULTATION_FEE, 10) || 5000, // Fallback only if no doctors available

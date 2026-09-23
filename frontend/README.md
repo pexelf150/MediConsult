@@ -9,7 +9,7 @@ Modern React frontend for the Online Doctor Consultation System with separate **
 - Tailwind CSS
 - Axios
 - Socket.io Client
-- Jitsi React SDK
+- Zoom Meetings API
 
 ## Setup
 
@@ -35,7 +35,7 @@ Ensure the backend is running on `http://localhost:5000` and MongoDB is availabl
 - Dashboard with stats and upcoming appointments
 - Book **Normal** appointments (symptoms, doctor selection, scheduling)
 - Book **Urgent** appointments (symptoms → Stripe payment → auto-assignment)
-- View appointments and join **Jitsi** video consultations
+- View appointments and join **Zoom** video consultations
 
 ### Doctor (`/doctor/*`)
 - Dashboard with urgent case alerts (real-time via Socket.io)

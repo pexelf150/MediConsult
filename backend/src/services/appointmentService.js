@@ -6,7 +6,7 @@ import ApiError from '../utils/ApiError.js';
 import env from '../config/env.js';
 import { getStripe } from '../config/stripe.js';
 import { findAvailableDoctor, getDoctorById } from './doctorService.js';
-import { createMeetingForAppointment } from './jitsiService.js';
+import { createZoomMeeting } from './zoomService.js';
 import {
   notifyDoctorUrgentAppointment,
   notifyPatientAppointmentConfirmed,
@@ -98,13 +98,29 @@ export const createNormalAppointment = async (patientId, appointmentData) => {
     tokenNumber,
   });
 
-  const meeting = createMeetingForAppointment(appointment._id, doctor, { _id: patientId });
+  try {
+    const meeting = await createZoomMeeting({
+      appointmentId: appointment._id,
+      doctor,
+      patient: { _id: patientId },
+      scheduledAt: appointment.scheduledAt,
+    });
 
-  appointment.jitsi = {
-    roomName: meeting.roomName,
-    meetingUrl: meeting.meetingUrl,
-    jwtToken: meeting.jwtToken,
-  };
+    appointment.zoom = {
+      meetingId: meeting.meetingId,
+      meetingUrl: meeting.meetingUrl,
+      meetingPassword: meeting.meetingPassword,
+      startUrl: meeting.startUrl,
+      joinUrl: meeting.joinUrl,
+      startTime: meeting.startTime,
+      duration: meeting.duration,
+      topic: meeting.topic,
+    };
+  } catch (zoomError) {
+    console.error('Zoom meeting creation failed:', zoomError.message);
+    throw new ApiError(500, 'Failed to create Zoom meeting. Please contact support.');
+  }
+  
   appointment.status = 'confirmed';
   await appointment.save();
 
@@ -320,13 +336,29 @@ export const finalizePayment = async (appointmentId, patientId, paymentData) => 
   // Create meeting link
   const doctor = await getDoctorById(appointment.doctor.toString());
   const patient = await User.findById(patientId);
-  const meeting = createMeetingForAppointment(appointment._id, doctor, patient);
+  
+  try {
+    const meeting = await createZoomMeeting({
+      appointmentId: appointment._id,
+      doctor,
+      patient,
+      scheduledAt: appointment.scheduledAt,
+    });
 
-  appointment.jitsi = {
-    roomName: meeting.roomName,
-    meetingUrl: meeting.meetingUrl,
-    jwtToken: meeting.jwtToken,
-  };
+    appointment.zoom = {
+      meetingId: meeting.meetingId,
+      meetingUrl: meeting.meetingUrl,
+      meetingPassword: meeting.meetingPassword,
+      startUrl: meeting.startUrl,
+      joinUrl: meeting.joinUrl,
+      startTime: meeting.startTime,
+      duration: meeting.duration,
+      topic: meeting.topic,
+    };
+  } catch (zoomError) {
+    console.error('Zoom meeting creation failed:', zoomError.message);
+    throw new ApiError(500, 'Failed to create Zoom meeting. Please contact support.');
+  }
 
   await appointment.save();
 
@@ -373,13 +405,28 @@ export const completeAppointmentAfterPayment = async (payment, io) => {
       contactPhone,
     });
 
-    const meeting = createMeetingForAppointment(appointment._id, doctor, patient);
+    try {
+      const meeting = await createZoomMeeting({
+        appointmentId: appointment._id,
+        doctor,
+        patient,
+        scheduledAt: appointment.scheduledAt,
+      });
 
-    appointment.jitsi = {
-      roomName: meeting.roomName,
-      meetingUrl: meeting.meetingUrl,
-      jwtToken: meeting.jwtToken,
-    };
+      appointment.zoom = {
+        meetingId: meeting.meetingId,
+        meetingUrl: meeting.meetingUrl,
+        meetingPassword: meeting.meetingPassword,
+        startUrl: meeting.startUrl,
+        joinUrl: meeting.joinUrl,
+        startTime: meeting.startTime,
+        duration: meeting.duration,
+        topic: meeting.topic,
+      };
+    } catch (zoomError) {
+      console.error('Zoom meeting creation failed:', zoomError.message);
+      throw new ApiError(500, 'Failed to create Zoom meeting. Please contact support.');
+    }
     await appointment.save();
 
     payment.appointment = appointment._id;
@@ -454,12 +501,28 @@ export const completeAppointmentAfterPayment = async (payment, io) => {
       tokenNumber,
     });
 
-    const meeting = createMeetingForAppointment(appointment._id, doctor, patient);
-    appointment.jitsi = {
-      roomName: meeting.roomName,
-      meetingUrl: meeting.meetingUrl,
-      jwtToken: meeting.jwtToken,
-    };
+    try {
+      const meeting = await createZoomMeeting({
+        appointmentId: appointment._id,
+        doctor,
+        patient,
+        scheduledAt: appointment.scheduledAt,
+      });
+
+      appointment.zoom = {
+        meetingId: meeting.meetingId,
+        meetingUrl: meeting.meetingUrl,
+        meetingPassword: meeting.meetingPassword,
+        startUrl: meeting.startUrl,
+        joinUrl: meeting.joinUrl,
+        startTime: meeting.startTime,
+        duration: meeting.duration,
+        topic: meeting.topic,
+      };
+    } catch (zoomError) {
+      console.error('Zoom meeting creation failed:', zoomError.message);
+      throw new ApiError(500, 'Failed to create Zoom meeting. Please contact support.');
+    }
     await appointment.save();
 
     reservation.status = 'confirmed';

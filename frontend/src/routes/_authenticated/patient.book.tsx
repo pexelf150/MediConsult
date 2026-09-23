@@ -154,6 +154,20 @@ function BookNormal() {
     },
   });
 
+  // ── Data: exchange rate ───────────────────────────────────────────────────
+  const { data: exchangeRate } = useQuery({
+    queryKey: ["exchangeRate"],
+    queryFn: async () => {
+      const response = await fetch('/api/currency/rate', {
+        credentials: 'include',
+      });
+      const result = await response.json();
+      if (!response.ok) return null;
+      return result.data;
+    },
+    staleTime: 10 * 60 * 1000, // Cache for 10 minutes
+  });
+
   // ── Data: weekly capacity ────────────────────────────────────────────────
   const { data: weekCapacity, isLoading: capacityLoading } = useQuery({
     queryKey: ["week-capacity", selectedDoctor?._id, weekDates.join(",")],
@@ -383,6 +397,11 @@ function BookNormal() {
                           <div className="text-sm text-muted-foreground">{d.specialization}</div>
                           <div className="mt-1 text-xs text-muted-foreground">
                             LKR {d.consultationFee || 2500} per visit
+                            {exchangeRate?.lkrToUsd && (
+                              <span className="ml-2 text-gray-400">
+                                (${((d.consultationFee || 2500) * exchangeRate.lkrToUsd).toFixed(2)})
+                              </span>
+                            )}
                           </div>
                           {d.bio && <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{d.bio}</p>}
                         </div>

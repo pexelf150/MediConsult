@@ -437,9 +437,9 @@ function PatientAppointments() {
                       )}
                     </div>
                     <div className="flex gap-2">
-                      {a.jitsi?.meetingUrl && a.status !== "completed" && a.status !== "cancelled" && (
-                        <Button 
-                          size="sm" 
+                      {(a.zoom?.meetingUrl || a.jitsi?.meetingUrl) && a.status !== "completed" && a.status !== "cancelled" && (
+                        <Button
+                          size="sm"
                           onClick={() => navigate({ to: "/meeting", search: { appointmentId: a._id } })}
                           disabled={!a.doctorApproved}
                         >

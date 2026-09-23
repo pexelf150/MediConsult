@@ -15,6 +15,7 @@ import jsPDF from "jspdf";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiUrl } from "@/lib/api-config";
 import PrescriptionPadV2 from "@/components/PrescriptionPad";
+import ZoomMeeting from "@/components/ZoomMeeting";
 
 // Helper function to calculate age from date of birth
 const calculateAge = (dateOfBirth: string | Date | undefined): number => {
@@ -373,16 +374,20 @@ function MeetingPage() {
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left: Video Meeting */}
-        <div className="flex-1 bg-black">
-          {appointment.jitsi?.meetingUrl ? (
-            <iframe
-              src={appointment.jitsi.meetingUrl}
-              className="h-full w-full"
-              allow="camera; microphone; fullscreen; display-capture"
-              title="Video Consultation"
-            />
+        <div className="flex-1 bg-black relative">
+          {appointment.zoom ? (
+            <div className="flex flex-col items-center justify-center h-full bg-black">
+              <p className="text-white mb-4">Click below to join the Zoom meeting</p>
+              <Button
+                onClick={() => window.open(appointment.zoom.meetingUrl, '_blank')}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                Join Zoom Meeting
+              </Button>
+            </div>
           ) : (
-            <div className="flex h-full items-center justify-center text-white">
+            <div className="flex items-center justify-center h-full">
+              <p className="text-gray-500">Meeting not yet created. Please try again later.</p>
               <p className="text-lg">No meeting link available</p>
             </div>
           )}

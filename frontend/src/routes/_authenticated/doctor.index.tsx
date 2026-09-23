@@ -719,7 +719,7 @@ function AppointmentCard({
     status: string;
     scheduledAt: string;
     symptoms: string | null;
-    jitsi?: {
+    zoom?: {
       meetingUrl: string | null;
     };
     doctorApproved: boolean;
@@ -891,7 +891,7 @@ function AppointmentCard({
           )}
         </div>
         <div className="flex gap-2">
-          {appt.jitsi?.meetingUrl && appt.status !== "completed" && (
+          {(appt.zoom?.meetingUrl || appt.jitsi?.meetingUrl) && appt.status !== "completed" && (
             <Button size="sm" onClick={() => navigate({ to: "/meeting", search: { appointmentId: appt._id } })}>
               <Video className="mr-1.5 h-4 w-4" /> Join
             </Button>

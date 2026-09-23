@@ -8,6 +8,7 @@ import notificationRoutes from './notificationRoutes.js';
 import currencyRoutes from './currencyRoutes.js';
 import passwordResetRoutes from './passwordResetRoutes.js';
 import rescheduleRoutes from './rescheduleRoutes.js';
+import zoomRoutes from './zoomRoutes.js';
 
 const router = Router();
 
@@ -28,5 +29,6 @@ router.use('/notifications', notificationRoutes);
 router.use('/currency', currencyRoutes);
 router.use('/password-reset', passwordResetRoutes);
 router.use('/reschedule', rescheduleRoutes);
+router.use('/zoom', zoomRoutes);
 
 export default router;

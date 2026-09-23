@@ -89,10 +89,15 @@ const appointmentSchema = new mongoose.Schema(
       type: Number,
       default: 30,
     },
-    jitsi: {
-      roomName: { type: String, default: null },
+    zoom: {
+      meetingId: { type: String, default: null },
       meetingUrl: { type: String, default: null },
-      jwtToken: { type: String, default: null, select: false },
+      meetingPassword: { type: String, default: null },
+      startUrl: { type: String, default: null },
+      joinUrl: { type: String, default: null },
+      startTime: { type: Date, default: null },
+      duration: { type: Number, default: 60 },
+      topic: { type: String, default: null },
     },
     payment: {
       type: mongoose.Schema.Types.ObjectId,

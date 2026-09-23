@@ -63,6 +63,20 @@ function UrgentFlow() {
     fetchDoctors();
   }, []);
 
+  // Fetch exchange rate
+  const { data: exchangeRate } = useQuery({
+    queryKey: ["exchangeRate"],
+    queryFn: async () => {
+      const response = await fetch('/api/currency/rate', {
+        credentials: 'include',
+      });
+      const result = await response.json();
+      if (!response.ok) return null;
+      return result.data;
+    },
+    staleTime: 10 * 60 * 1000, // Cache for 10 minutes
+  });
+
   const onNext = async (e: React.FormEvent) => {
     e.preventDefault();
     if (symptoms.trim().length < 10) {
@@ -168,6 +182,11 @@ function UrgentFlow() {
                   </div>
                   <div className="text-sm font-semibold">
                     Rs. {doctor.urgentFee || 500}
+                    {exchangeRate?.lkrToUsd && (
+                      <span className="ml-2 text-gray-400 text-xs">
+                        (${((doctor.urgentFee || 500) * exchangeRate.lkrToUsd).toFixed(2)})
+                      </span>
+                    )}
                   </div>
                 </div>
               ))}

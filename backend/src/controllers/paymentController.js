@@ -1,6 +1,7 @@
 import asyncHandler from '../utils/asyncHandler.js';
 import ApiResponse from '../utils/ApiResponse.js';
 import * as paymentService from '../services/paymentService.js';
+import * as mpgsService from '../services/mpgsService.js';
 
 export const stripeWebhook = asyncHandler(async (req, res) => {
   const signature = req.headers['stripe-signature'];
@@ -34,9 +35,36 @@ export const getPayment = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, 'Payment retrieved', { payment }));
 });
 
+export const createMPGSPayment = asyncHandler(async (req, res) => {
+  const { amount, metadata, currency } = req.body;
+  const io = req.app.get('io');
+  const returnUrl = `${req.protocol}://${req.get('host')}/payments/mpgs/return`;
+
+  const result = await mpgsService.createMPGSPayment({
+    patient: req.user._id,
+    amount,
+    metadata,
+    returnUrl,
+    currency,
+  }, io);
+
+  res.status(200).json(new ApiResponse(200, 'MPGS payment session created', result));
+});
+
+export const processMPGSReturn = asyncHandler(async (req, res) => {
+  const { orderId, sessionId } = req.query;
+  const io = req.app.get('io');
+
+  const result = await mpgsService.processMPGSPayment(orderId, sessionId, io);
+
+  res.status(200).json(new ApiResponse(200, 'MPGS payment processed', result));
+});
+
 export default {
   stripeWebhook,
   verifySession,
   simulateSuccess,
   getPayment,
+  createMPGSPayment,
+  processMPGSReturn,
 };
