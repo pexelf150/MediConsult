@@ -56,9 +56,12 @@ export function PaymentGateway({ paymentId, amount, currency, payment, reservati
         // Load MPGS Checkout.js and configure
         if (!window.Checkout) {
           const script = document.createElement('script');
-          script.src = `${bankUrl}/checkout/${apiVersion}/checkout.js`;
+          script.src = `${bankUrl}/static/checkout/checkout.min.js`;
           script.async = true;
-          script.onload = () => configureMPGS(sessionId, orderId, merchantId);
+          script.onload = () => {
+            console.log('Checkout.js loaded successfully');
+            configureMPGS(sessionId, orderId, merchantId);
+          };
           script.onerror = () => {
             toast.error('Failed to load MPGS Checkout.js. Please check with Seylan Bank for the correct Checkout.js URL.');
             setProcessing(false);
@@ -92,30 +95,10 @@ export function PaymentGateway({ paymentId, amount, currency, payment, reservati
     }
 
     // @ts-ignore - Checkout is loaded from external script
+    // For version 67+, only session object is allowed in configure()
     Checkout.configure({
-      merchant: merchantId,
       session: {
         id: sessionId,
-      },
-      interaction: {
-        merchant: {
-          name: 'Premedi Lanka',
-          email: 'info@premedilanka.com',
-          phone: '+94 123 456 789',
-          logo: '/logo.jpeg',
-          url: window.location.origin,
-          address: {
-            line1: 'Sri Lanka',
-            line2: '',
-          },
-        },
-        displayControl: {
-          billingAddress: 'HIDE',
-          customerEmail: 'HIDE',
-          orderSummary: 'SHOW',
-          paymentConfirmation: 'HIDE',
-          shipping: 'HIDE',
-        },
       },
     });
 

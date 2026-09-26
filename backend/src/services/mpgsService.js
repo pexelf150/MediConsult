@@ -6,7 +6,7 @@ const MPGS_CONFIG = {
   bankUrl: process.env.MPGS_BANK_URL || 'https://test-seylan.mtf.gateway.mastercard.com',
   merchantId: process.env.MPGS_MERCHANT_ID,
   apiPassword: process.env.MPGS_API_PASSWORD,
-  apiVersion: process.env.MPGS_API_VERSION || '100',
+  apiVersion: process.env.MPGS_API_VERSION || '57',
   currency: process.env.MPGS_CURRENCY || 'LKR',
 };
 
@@ -28,6 +28,10 @@ export const createMPGSSession = async (paymentData) => {
   try {
     const url = `${MPGS_CONFIG.bankUrl}/api/rest/version/${MPGS_CONFIG.apiVersion}/merchant/${MPGS_CONFIG.merchantId}/session`;
 
+    console.log('MPGS Session Creation Request:');
+    console.log('URL:', url);
+    console.log('Request Body:', JSON.stringify(requestBody, null, 2));
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -38,6 +42,10 @@ export const createMPGSSession = async (paymentData) => {
     });
 
     const data = await response.json();
+
+    console.log('MPGS Session Creation Response:');
+    console.log('Status:', response.status);
+    console.log('Response Body:', JSON.stringify(data, null, 2));
 
     if (data.result !== 'SUCCESS') {
       throw new ApiError(400, `Failed to create MPGS session: ${data.error?.explanation || data.error?.cause || 'Unknown error'}`);
