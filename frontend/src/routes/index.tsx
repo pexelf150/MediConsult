@@ -323,11 +323,10 @@ function Landing() {
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <img src={logo} alt="King's Hospital Logo" style={{ height: '80px', width: 'auto', marginBottom: '20px' }} />
               <p style={{ fontSize: '0.9rem', lineHeight: '1.6', color: '#ffffff', maxWidth: '340px', textAlign: 'center' }}>
-                Your health matters, and so does your connection with us. Join the King's Hospital community - where care meets community, and well-being is our priority
+                Your health matters to us. Join PreMedi Lanka - where quality healthcare meets convenience, and your well-being is our top priority
               </p>
               <div style={{ marginTop: '32px', fontSize: '0.78rem', color: '#c7ced3', lineHeight: '1.7', textAlign: 'center' }}>
-                © All rights reserved. Kings Hospital. 2026<br />
-                Design and Developed By TekGeeks
+                © All rights reserved. PreMedi Lanka. 2026<br />
               </div>
             </div>
           </motion.div>
