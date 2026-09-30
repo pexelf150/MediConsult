@@ -35,7 +35,7 @@ export const Route = createFileRoute("/")({
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
-  show: {
+  visible: {
     opacity: 1,
     y: 0,
     transition: {
@@ -48,7 +48,7 @@ const fadeUp = {
 
 const stagger = {
   hidden: {},
-  show: {
+  visible: {
     transition: {
       staggerChildren: 0.12,
     },
@@ -157,7 +157,8 @@ function Landing() {
             {/* Left Content */}
             <motion.div
               initial="hidden"
-              animate="show"
+              whileInView="visible"
+              viewport={{ once: false, amount: 0.3 }}
               variants={stagger}
               className="max-w-2xl text-white"
             >
@@ -258,7 +259,8 @@ function Landing() {
             {/* Login Form */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: false, amount: 0.3 }}
               transition={{ duration: 0.6 }}
               className="flex items-center justify-center"
             >
@@ -301,55 +303,75 @@ function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-white/10 bg-[oklch(0.12_0.02_220)] text-white" style={{ fontFamily: 'sans-serif' }}>
-        <div className="mx-auto max-w-[1200px] px-[60px] py-12">
-          <div className="flex flex-wrap justify-between gap-10">
-            <div className="flex-1 min-w-[320px] max-w-[420px]">
-              <Link to="/" className="flex items-center gap-3 mb-5">
-                <img src={logo} alt="Premedi Lanka Logo" className="h-10 w-[70px] rounded-lg object-cover" />
-                <span className="text-[22px]  tracking-wide text-white">Premedi Lanka</span>
-              </Link>
-              <p className="text-sm text-white/80 mb-3.5 leading-relaxed">
-                {doctorPhone}
+      <motion.footer
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: false, amount: 0.3 }}
+        variants={stagger}
+        className="relative z-10"
+        style={{ background: '#00070B', fontFamily: "'Segoe UI', Arial, Helvetica, sans-serif", color: '#ffffff' }}
+      >
+        <div className="mx-auto max-w-[1280px]" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+          {/* LEFT COLUMN - BRANDING */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: false, amount: 0.3 }}
+            transition={{ duration: 0.6 }}
+            style={{ padding: '40px 32px', borderRight: '1px solid #5a6772', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid #5a6772' }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <img src={logo} alt="King's Hospital Logo" style={{ height: '80px', width: 'auto', marginBottom: '20px' }} />
+              <p style={{ fontSize: '0.9rem', lineHeight: '1.6', color: '#ffffff', maxWidth: '340px', textAlign: 'center' }}>
+                Your health matters, and so does your connection with us. Join the King's Hospital community - where care meets community, and well-being is our priority
               </p>
-              <p className="text-sm text-white/80 mb-3.5 leading-relaxed">
-                {doctorEmail}
-              </p>
-              <p className="text-sm text-white/80 mb-3.5 leading-relaxed">
-                Operating Hours: 24/7
-              </p>
-              <p className="text-sm text-white/80 leading-relaxed">
-                {doctorAddress}
-              </p>
+              <div style={{ marginTop: '32px', fontSize: '0.78rem', color: '#c7ced3', lineHeight: '1.7', textAlign: 'center' }}>
+                © All rights reserved. Kings Hospital. 2026<br />
+                Design and Developed By TekGeeks
+              </div>
             </div>
-            <div className="flex-0 min-w-[180px]">
-              <h4 className="text-base font-bold text-white mb-[18px]">Other</h4>
-              <ul className="space-y-3.5 text-sm">
-                <li><a href="#" className="text-white/80 hover:text-white transition-colors">Terms and Conditions</a></li>
-                <li><a href="#" className="text-white/80 hover:text-white transition-colors">FAQ</a></li>
-                <li><a href="#" className="text-white/80 hover:text-white transition-colors">Feedback</a></li>
-                <li><a href="#" className="text-white/80 hover:text-white transition-colors">Privacy Policy</a></li>
-              </ul>
+          </motion.div>
+
+          {/* RIGHT COLUMN */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: false, amount: 0.3 }}
+            transition={{ duration: 0.6 }}
+            style={{ padding: '40px 32px' }}
+          >
+            <div style={{ marginBottom: '26px' }}>
+              <label style={{ display: 'block', color: '#f5a623', fontSize: '0.85rem', letterSpacing: '1px', marginBottom: '6px' }}>EMAIL</label>
+              <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: '1.4' }}>{doctorEmail}</p>
             </div>
-            <div className="flex-0 min-w-[180px]">
-              <h4 className="text-base font-bold text-white mb-[18px]">About</h4>
-              <ul className="space-y-3.5 text-sm">
-                <li><a href="#" className="text-white/80 hover:text-white transition-colors">The Company</a></li>
-                <li><a href="#" className="text-white/80 hover:text-white transition-colors">Services</a></li>
-                <li><a href="#" className="text-white/80 hover:text-white transition-colors">Partners</a></li>
-                <li><a href="#" className="text-white/80 hover:text-white transition-colors">Careers</a></li>
-              </ul>
+            <div style={{ marginBottom: '26px' }}>
+              <label style={{ display: 'block', color: '#f5a623', fontSize: '0.85rem', letterSpacing: '1px', marginBottom: '6px' }}>LOCATION</label>
+              <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: '1.4' }}>{doctorAddress}</p>
             </div>
-          </div>
-          <div className="mt-12 border-t border-white/10 pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-white/60">
-            <span>© {new Date().getFullYear()} Premedi Lanka. All rights reserved.</span>
-            <div className="flex gap-4">
-              <a href="#" className="hover:text-white transition-colors">Twitter</a>
-              <a href="#" className="hover:text-white transition-colors">LinkedIn</a>
+            <div style={{ width: '56px', height: '56px', borderRadius: '50%', border: '2px solid #ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' }}>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.6">
+                <path d="M12 4a8 8 0 0 0-8 8c0 1.8.6 3.4 1.6 4.7L4 20l3.5-1.4A8 8 0 1 0 12 4z"/>
+                <text x="12" y="12.5" fontSize="6.5" fill="white" stroke="none" textAnchor="middle" fontWeight="700">24</text>
+              </svg>
             </div>
-          </div>
+            <div style={{ marginBottom: '26px' }}>
+              <label style={{ display: 'block', color: '#f5a623', fontSize: '0.85rem', letterSpacing: '1px', marginBottom: '6px' }}>HOTLINE</label>
+              <p style={{ margin: 0, fontSize: '1.3rem', letterSpacing: '1px' }}>{doctorPhone}</p>
+            </div>
+          </motion.div>
         </div>
-      </footer>
+        <style>{`
+          @media (max-width: 900px) {
+            footer > div {
+              grid-template-columns: 1fr !important;
+            }
+            footer > div > div {
+              border-right: none !important;
+              border-bottom: 1px solid #5a6772 !important;
+            }
+          }
+        `}</style>
+      </motion.footer>
 
       <ForgotPasswordModal open={forgotPasswordOpen} onOpenChange={setForgotPasswordOpen} />
     </div>

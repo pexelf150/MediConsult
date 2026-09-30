@@ -9,6 +9,9 @@ const patientSchema = new mongoose.Schema({
     type: String,
     enum: ['male', 'female', 'other', 'prefer_not_to_say'],
   },
+  age: {
+    type: Number,
+  },
   bloodGroup: {
     type: String,
     enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', null],

@@ -16,7 +16,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
-import { User, Mail, Phone, Calendar, Users, Save, Loader2, Shield, Cake, CheckCircle2, Trash2 } from "lucide-react";
+import { User, Mail, Phone, Calendar, Users, Save, Loader2, Shield, Cake, CheckCircle2, Trash2, Eye, EyeOff } from "lucide-react";
 import CountryCodeSelector from "@/components/country-code-selector";
 import { toast } from "sonner";
 
@@ -36,11 +36,18 @@ function PatientProfile() {
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [age, setAge] = useState("");
 
+  // Edit mode state
+  const [isEditing, setIsEditing] = useState(false);
+
   // Password change state
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordLoading, setPasswordLoading] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Delete account state
   const [deletePassword, setDeletePassword] = useState("");
@@ -300,334 +307,277 @@ function PatientProfile() {
   const initials = `${firstName[0] || ""}${lastName[0] || ""}`.toUpperCase();
 
   return (
-    <div className="w-full min-h-screen bg-slate-50 flex items-center justify-center p-6">
-      <div className="w-full max-w-4xl bg-white rounded-2xl overflow-hidden shadow-lg">
-        {/* Header */}
-        <div className="bg-slate-800 px-8 py-8 flex items-center gap-6">
-          <div className="w-24 h-24 rounded-full border-4 border-white/60 overflow-hidden shrink-0 bg-emerald-200">
-            <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-emerald-700">
-              {initials || <User className="h-12 w-12 text-emerald-600" />}
-            </div>
+    <div style={{ background: '#f7f8fa', minHeight: '100vh', padding: '0' }}>
+      {/* Header */}
+      <div className="header" style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '28px clamp(16px, 4vw, 48px)',
+        gap: '16px',
+        flexWrap: 'wrap'
+      }}>
+        <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div className="avatar" style={{
+            width: '72px',
+            height: '72px',
+            minWidth: '72px',
+            borderRadius: '50%',
+            background: '#e2e3e5',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: '600',
+            fontSize: '1.15rem',
+            color: '#4a4a4a'
+          }}>
+            {initials}
           </div>
-          <div className="text-white">
-            <h1 className="text-2xl font-light">
-              {firstName} {lastName},
-              <br />
-              <span className="font-semibold">I&apos;m a Patient</span>
+          <div>
+            <h1 style={{ fontSize: '1.5rem', margin: '0', color: '#3a3a3a', fontWeight: '400', wordBreak: 'break-word' }}>
+              {firstName} {lastName}
             </h1>
-            <div className="flex flex-wrap gap-6 mt-4 text-sm text-emerald-50">
-              <span className="flex items-center gap-2">
-                <Mail className="h-4 w-4" /> {user?.email}
-              </span>
-              <span className="flex items-center gap-2">
-                <Phone className="h-4 w-4" /> {countryCode} {phone}
-              </span>
-              <span className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" /> {age} years old
-              </span>
-            </div>
+            <p style={{ fontSize: '0.95rem', margin: '4px 0 0', color: '#4a4a4a' }}>
+              {user?.email}
+            </p>
           </div>
         </div>
+        <button
+          onClick={() => setIsEditing(!isEditing)}
+          className="reset-btn"
+          style={{
+            background: '#4a4a4a',
+            color: '#ffffff',
+            border: 'none',
+            borderRadius: '4px',
+            padding: '10px 18px',
+            fontSize: '0.9rem',
+            cursor: 'pointer',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          {isEditing ? 'Cancel editing' : 'Edit profile'}
+        </button>
+      </div>
 
-        {/* Body with Tabs */}
-        <div className="p-8">
-          <Tabs defaultValue="personal" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="personal">Personal Details</TabsTrigger>
-              <TabsTrigger value="security">Security</TabsTrigger>
-            </TabsList>
+      {/* Card */}
+      <div className="card" style={{
+        background: '#ffffff',
+        margin: '0 clamp(12px, 3vw, 32px) 32px',
+        borderRadius: '6px',
+        padding: 'clamp(16px, 3vw, 36px)',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
+      }}>
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            @media (max-width: 640px) {
+              .columns-responsive { grid-template-columns: 1fr !important; gap: 8px !important; }
+            }
+          `
+        }} />
+        <div className="columns columns-responsive" style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: '40px'
+        }}>
+          {/* LEFT COLUMN */}
+          <div>
+            <section className="block" style={{ marginBottom: '36px' }}>
+              <h2 className="section-title" style={{ fontSize: '1.05rem', color: '#3a3a3a', margin: '0 0 14px', fontWeight: '700' }}>
+                User details
+              </h2>
 
-            <TabsContent value="personal" className="animate-in slide-in-from-left-4 fade-in-10 duration-300">
-              <div>
-                <h2 className="text-xs font-semibold tracking-wide text-slate-400 mb-4">
-                  PERSONAL DETAILS
-                </h2>
-                <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5">
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="firstName">First Name</Label>
-                        <div className="relative">
-                          <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
-                          <Input
-                            id="firstName"
-                            value={firstName}
-                            onChange={(e) => setFirstName(e.target.value)}
-                            required
-                            placeholder="John"
-                            className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
-                          />
-                        </div>
-                      </div>
+              {!isEditing ? (
+                <>
+                  <div className="field-label" style={{ fontWeight: '700', color: '#3a3a3a', margin: '14px 0 4px', fontSize: '0.95rem' }}>
+                    Name
+                  </div>
+                  <p className="field-value" style={{ margin: '0 0 6px', fontSize: '0.95rem' }}>
+                    {firstName} {lastName}
+                  </p>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="lastName">Last Name</Label>
-                        <div className="relative">
-                          <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
-                          <Input
-                            id="lastName"
-                            value={lastName}
-                            onChange={(e) => setLastName(e.target.value)}
-                            required
-                            placeholder="Doe"
-                            className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
-                          />
-                        </div>
-                      </div>
+                  <div className="field-label" style={{ fontWeight: '700', color: '#3a3a3a', margin: '14px 0 4px', fontSize: '0.95rem' }}>
+                    Email address
+                  </div>
+                  <p className="field-value" style={{ margin: '0 0 6px', fontSize: '0.95rem' }}>
+                    <a href={`mailto:${user?.email}`} style={{ color: '#d98a1d', textDecoration: 'none', fontSize: '0.95rem' }}>
+                      {user?.email}
+                    </a>
+                  </p>
 
-                      <div className="space-y-2 md:col-span-2">
-                        <Label htmlFor="email">Email Address</Label>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
-                          <Input
-                            id="email"
-                            type="email"
-                            value={user?.email || ""}
-                            disabled
-                            className="pl-10 rounded-xl bg-muted/40 border-muted-foreground/10 text-muted-foreground cursor-not-allowed"
-                          />
-                        </div>
-                        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
-                          <p className="text-xs text-amber-700">Email address cannot be changed</p>
-                        </div>
-                      </div>
+                  <div className="field-label" style={{ fontWeight: '700', color: '#3a3a3a', margin: '14px 0 4px', fontSize: '0.95rem' }}>
+                    Phone
+                  </div>
+                  <p className="field-value" style={{ margin: '0 0 6px', fontSize: '0.95rem' }}>
+                    {phone ? `${countryCode} ${phone}` : 'Not specified'}
+                  </p>
 
-                      <div className="space-y-2 md:col-span-2">
-                        <Label htmlFor="phone">Phone Number</Label>
-                        <div className="grid grid-cols-2 gap-2">
-                          <CountryCodeSelector value={countryCode} onChange={setCountryCode} />
-                          <div className="relative">
-                            <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
-                            <Input
-                              id="phone"
-                              type="tel"
-                              value={phone}
-                              onChange={(e) => setPhone(e.target.value)}
-                              required
-                              placeholder="77 123 4567"
-                              className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
-                            />
-                          </div>
-                        </div>
-                      </div>
+                  <div className="field-label" style={{ fontWeight: '700', color: '#3a3a3a', margin: '14px 0 4px', fontSize: '0.95rem' }}>
+                    Gender
+                  </div>
+                  <p className="field-value" style={{ margin: '0 0 6px', fontSize: '0.95rem' }}>
+                    {gender ? gender.charAt(0).toUpperCase() + gender.slice(1).replace(/_/g, ' ') : 'Not specified'}
+                  </p>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="gender">Gender</Label>
-                        <div className="relative">
-                          <Users className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600 pointer-events-none" />
-                          <select
-                            id="gender"
-                            value={gender}
-                            onChange={(e) => setGender(e.target.value)}
-                            required
-                            className="h-10 w-full rounded-xl border border-emerald-100 bg-emerald-50/30 pl-10 pr-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
-                          >
-                            <option value="" disabled>Select Gender</option>
-                            <option value="male">Male</option>
-                            <option value="female">Female</option>
-                            <option value="other">Other</option>
-                            <option value="prefer_not_to_say">Prefer Not to Say</option>
-                          </select>
-                        </div>
-                      </div>
+                  <div className="field-label" style={{ fontWeight: '700', color: '#3a3a3a', margin: '14px 0 4px', fontSize: '0.95rem' }}>
+                    Date of Birth
+                  </div>
+                  <p className="field-value" style={{ margin: '0 0 6px', fontSize: '0.95rem' }}>
+                    {dateOfBirth ? new Date(dateOfBirth).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not specified'}
+                  </p>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                        <div className="relative">
-                          <Cake className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
-                          <Input
-                            id="dateOfBirth"
-                            type="date"
-                            value={dateOfBirth}
-                            onChange={(e) => setDateOfBirth(e.target.value)}
-                            required
-                            className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
-                          />
-                        </div>
-                      </div>
+                  <div className="field-label" style={{ fontWeight: '700', color: '#3a3a3a', margin: '14px 0 4px', fontSize: '0.95rem' }}>
+                    Age
+                  </div>
+                  <p className="field-value" style={{ margin: '0 0 6px', fontSize: '0.95rem' }}>
+                    {age ? `${age} years old` : 'Not specified'}
+                  </p>
+                </>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">First Name</Label>
+                    <Input
+                      id="firstName"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      required
+                      placeholder="John"
+                      className="rounded-xl"
+                    />
+                  </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="age">Age</Label>
-                        <div className="relative">
-                          <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
-                          <Input
-                            id="age"
-                            type="number"
-                            min="1"
-                            max="120"
-                            value={age}
-                            disabled
-                            placeholder="30"
-                            className="pl-10 rounded-xl bg-muted/40 border-muted-foreground/10 text-muted-foreground cursor-not-allowed"
-                          />
-                        </div>
-                        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
-                          <p className="text-xs text-amber-700">Age is automatically calculated from date of birth</p>
-                        </div>
-                      </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <Input
+                      id="lastName"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      required
+                      placeholder="Doe"
+                      className="rounded-xl"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <CountryCodeSelector value={countryCode} onChange={setCountryCode} />
+                      <Input
+                        id="phone"
+                        type="tel"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        required
+                        placeholder="77 123 4567"
+                        className="rounded-xl"
+                      />
                     </div>
+                  </div>
 
-                    <div className="flex justify-end pt-4 border-t border-emerald-50">
-                      <Button
-                        type="submit"
-                        disabled={updateProfileMutation.isPending}
-                        className="gap-2 rounded-xl px-5 bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-700/10"
-                      >
-                        {updateProfileMutation.isPending ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" /> Saving...
-                          </>
-                        ) : (
-                          <>
-                            <Save className="h-4 w-4" /> Save Profile
-                          </>
-                        )}
-                      </Button>
+                  <div className="space-y-2">
+                    <Label htmlFor="gender">Gender</Label>
+                    <select
+                      id="gender"
+                      value={gender}
+                      onChange={(e) => setGender(e.target.value)}
+                      required
+                      className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm"
+                    >
+                      <option value="" disabled>Select Gender</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                      <option value="prefer_not_to_say">Prefer Not to Say</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                    <Input
+                      id="dateOfBirth"
+                      type="date"
+                      value={dateOfBirth}
+                      onChange={(e) => setDateOfBirth(e.target.value)}
+                      required
+                      className="rounded-xl"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="age">Age</Label>
+                    <Input
+                      id="age"
+                      type="number"
+                      min="1"
+                      max="120"
+                      value={age}
+                      disabled
+                      placeholder="30"
+                      className="rounded-xl bg-slate-100 cursor-not-allowed"
+                    />
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
+                      <p className="text-xs text-amber-700">Age is automatically calculated from date of birth</p>
                     </div>
-                  </form>
-                </div>
+                  </div>
+
+                  <div className="flex justify-end pt-4 border-t border-slate-200">
+                    <Button
+                      type="submit"
+                      disabled={updateProfileMutation.isPending}
+                      className="gap-2 rounded-xl px-5 bg-slate-800 hover:bg-slate-900"
+                    >
+                      {updateProfileMutation.isPending ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" /> Saving...
+                        </>
+                      ) : (
+                        <>
+                          Save Profile
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              )}
+            </section>
+          </div>
+
+          {/* RIGHT COLUMN */}
+          <div>
+            <section className="block" style={{ marginBottom: '36px' }}>
+              <h2 className="section-title" style={{ fontSize: '1.05rem', color: '#3a3a3a', margin: '0 0 14px', fontWeight: '700' }}>
+                Security
+              </h2>
+              <ul className="link-list" style={{ listStyle: 'none', padding: '0', margin: '0' }}>
+                <li style={{ marginBottom: '10px' }}>
+                  <a href="#" onClick={(e) => { e.preventDefault(); setShowPasswordDialog(true); }} style={{ color: '#d98a1d', textDecoration: 'none', fontSize: '0.95rem', cursor: 'pointer' }}>
+                    Change password
+                  </a>
+                </li>
+                <li style={{ marginBottom: '10px' }}>
+                  <button
+                    onClick={() => setShowDeleteDialog(true)}
+                    style={{ color: '#dc2626', textDecoration: 'none', fontSize: '0.95rem', background: 'none', border: 'none', cursor: 'pointer', padding: '0' }}
+                  >
+                    Delete account
+                  </button>
+                </li>
+              </ul>
+            </section>
+
+            <section className="block" style={{ marginBottom: '36px' }}>
+              <h2 className="section-title" style={{ fontSize: '1.05rem', color: '#3a3a3a', margin: '0 0 14px', fontWeight: '700' }}>
+                Login activity
+              </h2>
+              <div className="field-label" style={{ fontWeight: '700', color: '#3a3a3a', margin: '14px 0 4px', fontSize: '0.95rem' }}>
+                Account created
               </div>
-            </TabsContent>
-
-            <TabsContent value="security" className="animate-in slide-in-from-right-4 fade-in-10 duration-300">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Left column - Change Password */}
-                <div className="flex flex-col gap-6">
-                  <div>
-                    <h2 className="text-xs font-semibold tracking-wide text-slate-400 mb-4">
-                      CHANGE PASSWORD
-                    </h2>
-                    <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5">
-                      <form onSubmit={handlePasswordChange} className="space-y-6">
-                        <h3 className="text-lg font-semibold text-foreground border-b pb-3 border-emerald-50">
-                          Change Password
-                        </h3>
-
-                        <div className="space-y-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="currentPassword">Current Password</Label>
-                            <Input
-                              id="currentPassword"
-                              type="password"
-                              value={currentPassword}
-                              onChange={(e) => setCurrentPassword(e.target.value)}
-                              required
-                              placeholder="••••••••"
-                              className="rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
-                            />
-                          </div>
-
-                          <div className="grid gap-6 md:grid-cols-2">
-                            <div className="space-y-2">
-                              <Label htmlFor="newPassword">New Password</Label>
-                              <Input
-                                id="newPassword"
-                                type="password"
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
-                                required
-                                placeholder="••••••••"
-                                className="rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
-                              />
-                            </div>
-
-                            <div className="space-y-2">
-                              <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                              <Input
-                                id="confirmPassword"
-                                type="password"
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                required
-                                placeholder="••••••••"
-                                className="rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex justify-end pt-4 border-t border-emerald-50">
-                          <Button
-                            type="submit"
-                            disabled={passwordLoading}
-                            className="gap-2 rounded-xl px-5 bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-700/10"
-                          >
-                            {passwordLoading ? (
-                              <>
-                                <Loader2 className="h-4 w-4 animate-spin" /> Updating...
-                              </>
-                            ) : (
-                              <>
-                                <Save className="h-4 w-4" /> Update Password
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      </form>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right column - Security Info */}
-                <div className="flex flex-col gap-6">
-                  <div>
-                    <h2 className="text-xs font-semibold tracking-wide text-slate-400 mb-4">
-                      SECURITY INFO
-                    </h2>
-                    <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5">
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-3">
-                          <Shield className="h-5 w-5 text-emerald-600" />
-                          <div>
-                            <p className="font-medium text-sm">Secure Account</p>
-                            <p className="text-xs text-muted-foreground">Your account is protected</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <Shield className="h-5 w-5 text-emerald-600" />
-                          <div>
-                            <p className="font-medium text-sm">Password Requirements</p>
-                            <p className="text-xs text-muted-foreground">Minimum 8 characters</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <Shield className="h-5 w-5 text-emerald-600" />
-                          <div>
-                            <p className="font-medium text-sm">Last Login</p>
-                            <p className="text-xs text-muted-foreground">Secure authentication</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <h2 className="text-xs font-semibold tracking-wide text-slate-400 mb-4">
-                      DANGER ZONE
-                    </h2>
-                    <div className="bg-white rounded-xl border border-red-100 shadow-sm p-5">
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-3">
-                          <Trash2 className="h-5 w-5 text-red-600" />
-                          <div>
-                            <p className="font-medium text-sm">Delete Account</p>
-                            <p className="text-xs text-muted-foreground">Permanently delete your account and all data</p>
-                          </div>
-                        </div>
-                        <Button
-                          variant="destructive"
-                          className="w-full gap-2"
-                          onClick={() => setShowDeleteDialog(true)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          Delete Account
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
+              <p className="field-value" style={{ margin: '0 0 6px', fontSize: '0.95rem' }}>
+                {profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}
+              </p>
+            </section>
+          </div>
         </div>
       </div>
 
@@ -667,6 +617,105 @@ function PatientProfile() {
                 </>
               ) : (
                 "Delete Account"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Change Password Dialog */}
+      <AlertDialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Change Password</AlertDialogTitle>
+            <AlertDialogDescription>
+              Enter your current password and new password to update your credentials.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <form onSubmit={(e) => { e.preventDefault(); handlePasswordChange(e); }} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="currentPassword">Current Password</Label>
+              <div className="relative">
+                <Input
+                  id="currentPassword"
+                  type={showCurrentPassword ? "text" : "password"}
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="rounded-xl pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">New Password</Label>
+              <div className="relative">
+                <Input
+                  id="newPassword"
+                  type={showNewPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="rounded-xl pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm New Password</Label>
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="rounded-xl pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+          </form>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setShowPasswordDialog(false);
+              setCurrentPassword("");
+              setNewPassword("");
+              setConfirmPassword("");
+            }}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handlePasswordChange(e);
+              }}
+              disabled={passwordLoading}
+              className="bg-slate-800 hover:bg-slate-900"
+            >
+              {passwordLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Updating...
+                </>
+              ) : (
+                "Update Password"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

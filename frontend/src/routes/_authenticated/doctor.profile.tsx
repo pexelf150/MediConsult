@@ -5,7 +5,6 @@ import { apiUrl } from "@/lib/api-config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
@@ -38,8 +37,6 @@ function DoctorProfile() {
   const [experienceYears, setExperienceYears] = useState("");
   const [bio, setBio] = useState("");
   const [address, setAddress] = useState("");
-  const [city, setCity] = useState("");
-  const [licenseNumber, setLicenseNumber] = useState("");
   const [contactEmail, setContactEmail] = useState("");
 
   // Password change state
@@ -99,8 +96,6 @@ function DoctorProfile() {
       setExperienceYears(doctor.experienceYears ? String(doctor.experienceYears) : "");
       setBio(doctor.bio || "");
       setAddress(doctor.address || "");
-      setCity(doctor.city || "");
-      setLicenseNumber(doctor.licenseNumber || "");
       setContactEmail(doctor.contactEmail || "");
       console.log('Final state - countryCode:', countryCode, 'phone:', phone);
     }
@@ -127,8 +122,6 @@ function DoctorProfile() {
         bio: bio.trim(),
         experienceYears: expNum,
         address: address.trim(),
-        city: city.trim(),
-        licenseNumber: licenseNumber.trim(),
         contactEmail: contactEmail.trim(),
       };
       console.log('Sending update data:', updateData);
@@ -199,36 +192,6 @@ function DoctorProfile() {
       toast.error(err.message || "Failed to change password.");
     } finally {
       setPasswordLoading(false);
-    }
-  };
-
-  const handleDeleteAccount = async () => {
-    if (!deletePassword) {
-      toast.error("Please enter your password to confirm account deletion.");
-      return;
-    }
-
-    setDeleteLoading(true);
-    try {
-      const response = await fetch('/api/auth/delete-account', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          password: deletePassword,
-        }),
-      });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.message || 'Failed to delete account');
-      toast.success("Account deleted successfully!");
-      setShowDeleteDialog(false);
-      setDeletePassword("");
-      // Redirect to login page after successful deletion
-      window.location.href = '/auth/login';
-    } catch (err: any) {
-      toast.error(err.message || "Failed to delete account.");
-    } finally {
-      setDeleteLoading(false);
     }
   };
 
@@ -330,9 +293,7 @@ function DoctorProfile() {
                             className="pl-10 rounded-xl bg-muted/40 border-muted-foreground/10 text-muted-foreground cursor-not-allowed"
                           />
                         </div>
-                        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
-                          <p className="text-xs text-amber-700">Email address cannot be changed</p>
-                        </div>
+                        <p className="text-[10px] text-muted-foreground">Email address cannot be changed</p>
                       </div>
 
                       <div className="space-y-2 md:col-span-2">
@@ -369,21 +330,6 @@ function DoctorProfile() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="licenseNumber">Medical License Number</Label>
-                        <div className="relative">
-                          <Stethoscope className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
-                          <Input
-                            id="licenseNumber"
-                            value={licenseNumber}
-                            onChange={(e) => setLicenseNumber(e.target.value)}
-                            required
-                            placeholder="MED-12345"
-                            className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
                         <Label htmlFor="experience">Years of Experience</Label>
                         <div className="relative">
                           <Briefcase className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
@@ -414,8 +360,8 @@ function DoctorProfile() {
                         </div>
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="address">Clinic Address (Street)</Label>
+                      <div className="space-y-2 md:col-span-2">
+                        <Label htmlFor="address">Clinic Address</Label>
                         <div className="relative">
                           <Info className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
                           <Input
@@ -423,22 +369,7 @@ function DoctorProfile() {
                             value={address}
                             onChange={(e) => setAddress(e.target.value)}
                             required
-                            placeholder="123 Healthcare Street"
-                            className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="city">City & District</Label>
-                        <div className="relative">
-                          <Info className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
-                          <Input
-                            id="city"
-                            value={city}
-                            onChange={(e) => setCity(e.target.value)}
-                            required
-                            placeholder="Medical District, City 12345"
+                            placeholder="123 Healthcare Street, Medical District, City 12345"
                             className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
                           />
                         </div>
@@ -458,9 +389,7 @@ function DoctorProfile() {
                             className="pl-10 rounded-xl bg-emerald-50/30 border-emerald-100 focus-visible:ring-emerald-500"
                           />
                         </div>
-                        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
-                          <p className="text-xs text-amber-700">This email address is designated to receive notifications for urgent consultations.</p>
-                        </div>
+                        <p className="text-[10px] text-muted-foreground">This email address is designated to receive notifications for urgent consultations.</p>
                       </div>
                     </div>
 
@@ -597,78 +526,12 @@ function DoctorProfile() {
                       </div>
                     </div>
                   </div>
-                  <div>
-                    <h2 className="text-xs font-semibold tracking-wide text-slate-400 mb-4">
-                      DANGER ZONE
-                    </h2>
-                    <div className="bg-white rounded-xl border border-red-100 shadow-sm p-5">
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-3">
-                          <Trash2 className="h-5 w-5 text-red-600" />
-                          <div>
-                            <p className="font-medium text-sm">Delete Account</p>
-                            <p className="text-xs text-muted-foreground">Permanently delete your account and all data</p>
-                          </div>
-                        </div>
-                        <Button
-                          variant="destructive"
-                          className="w-full gap-2"
-                          onClick={() => setShowDeleteDialog(true)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          Delete Account
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             </TabsContent>
           </Tabs>
         </div>
       </div>
-
-      {/* Delete Account Confirmation Dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure you want to delete your account?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your account and remove all your data from our servers.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="deletePassword">Enter your password to confirm</Label>
-              <Input
-                id="deletePassword"
-                type="password"
-                value={deletePassword}
-                onChange={(e) => setDeletePassword(e.target.value)}
-                placeholder="••••••••"
-                className="rounded-xl"
-              />
-            </div>
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteAccount}
-              disabled={deleteLoading}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {deleteLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Deleting...
-                </>
-              ) : (
-                "Delete Account"
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
