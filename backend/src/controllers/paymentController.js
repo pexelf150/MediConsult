@@ -38,13 +38,11 @@ export const getPayment = asyncHandler(async (req, res) => {
 export const createMPGSPayment = asyncHandler(async (req, res) => {
   const { amount, metadata, currency } = req.body;
   const io = req.app.get('io');
-  const returnUrl = `${req.protocol}://${req.get('host')}/payments/mpgs/return`;
 
   const result = await mpgsService.createMPGSPayment({
     patient: req.user._id,
     amount,
     metadata,
-    returnUrl,
     currency,
   }, io);
 

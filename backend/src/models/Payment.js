@@ -64,7 +64,7 @@ const paymentSchema = new mongoose.Schema(
 
       type: String,
 
-      enum: ['stripe', 'manual'],
+      enum: ['stripe', 'manual', 'mpgs'],
 
       default: 'stripe',
 
@@ -78,6 +78,12 @@ const paymentSchema = new mongoose.Schema(
 
       customerId: { type: String, default: null },
 
+    },
+
+    mpgs: {
+      sessionId: { type: String, default: null, index: true },
+      orderId: { type: String, default: null },
+      transactionId: { type: String, default: null },
     },
 
     metadata: {

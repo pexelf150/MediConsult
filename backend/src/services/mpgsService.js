@@ -6,8 +6,9 @@ const MPGS_CONFIG = {
   bankUrl: process.env.MPGS_BANK_URL || 'https://test-seylan.mtf.gateway.mastercard.com',
   merchantId: process.env.MPGS_MERCHANT_ID,
   apiPassword: process.env.MPGS_API_PASSWORD,
-  apiVersion: process.env.MPGS_API_VERSION || '57',
+  apiVersion: process.env.MPGS_API_VERSION || '100',
   currency: process.env.MPGS_CURRENCY || 'LKR',
+  merchantName: process.env.MPGS_MERCHANT_NAME || 'PreMedi Lanka Health Care',
 };
 
 // Helper to get Basic Auth header
@@ -19,10 +20,23 @@ const getAuthHeader = () => {
 };
 
 export const createMPGSSession = async (paymentData) => {
-  const { orderId } = paymentData;
+  const { orderId, amount, currency, metadata } = paymentData;
 
   const requestBody = {
-    apiOperation: 'CREATE_CHECKOUT_SESSION',
+    apiOperation: 'INITIATE_CHECKOUT',
+    interaction: {
+      operation: 'PURCHASE',
+      merchant: {
+        name: MPGS_CONFIG.merchantName,
+      },
+    },
+    order: {
+      amount: amount,
+      currency: currency || MPGS_CONFIG.currency,
+      id: orderId,
+      reference: `REF-${Date.now()}`,
+      description: metadata?.appointmentType === 'urgent' ? 'Urgent Medical Consultation' : 'Medical Consultation',
+    },
   };
 
   try {
@@ -139,6 +153,9 @@ export const createMPGSPayment = async (paymentData, io) => {
   // Create MPGS session
   const sessionData = await createMPGSSession({
     orderId,
+    amount,
+    currency: currency || MPGS_CONFIG.currency,
+    metadata,
   });
 
   // Update payment with session data

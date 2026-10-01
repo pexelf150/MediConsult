@@ -39,7 +39,7 @@ export function PaymentGateway({ paymentId, amount, currency, payment, reservati
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify({
-            amount: amount * 100, // Convert to cents
+            amount: amount,
             currency: currency || 'LKR',
             metadata: payment?.metadata || {},
           }),
@@ -87,23 +87,17 @@ export function PaymentGateway({ paymentId, amount, currency, payment, reservati
     }
   };
 
-  const configureMPGS = (sessionId: string, orderId: string, merchantId: string) => {
-    if (!window.Checkout) {
-      toast.error('MPGS Checkout.js failed to load');
-      setProcessing(false);
-      return;
+  const configureMPGS = (sessionId, orderId, merchantId, bankUrl, apiVersion) => {
+    if (window.Checkout) {
+      window.Checkout.configure({
+        merchant: merchantId,
+        session: {
+          id: sessionId,
+        },
+      });
+      // @ts-ignore
+      window.Checkout.showPaymentPage();
     }
-
-    // @ts-ignore - Checkout is loaded from external script
-    // For version 67+, only session object is allowed in configure()
-    Checkout.configure({
-      session: {
-        id: sessionId,
-      },
-    });
-
-    // @ts-ignore
-    Checkout.showPaymentPage();
   };
 
   return (
